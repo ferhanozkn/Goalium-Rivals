@@ -236,6 +236,8 @@ Maç sonucu turların toplamıdır. Sonuç `matches` tablosuna `status = finishe
 
 **İçerik durumları:** `draft → in_review → approved → published → retired`. Yalnız `published` sorular oyuna girer.
 
+Soru havuzunun mod bazında kademeli artış hedefleri, ücretsiz veri kaynakları ve yayın kapıları [`docs/question-bank-growth-plan.md`](docs/question-bank-growth-plan.md) içinde planlanmıştır. Bu hedefler lisans ve editör doğrulaması tamamlanmadan otomatik yayın izni vermez.
+
 ---
 
 ## 9. Veri modeli (PostgreSQL)
