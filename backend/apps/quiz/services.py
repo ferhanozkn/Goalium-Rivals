@@ -1,8 +1,10 @@
 from django.db import transaction
+from django.core.exceptions import ValidationError
 from django.utils import timezone
 from rest_framework.exceptions import PermissionDenied
 
 from apps.quiz.models import GameSession, Match, MatchParticipant
+from apps.quiz.engine.multiplayer import start_live_match
 
 
 def request_actor(request):
@@ -59,4 +61,9 @@ def join_live_match(match: Match, actor):
         match.game_session.started_at = match.started_at
         match.game_session.save(update_fields=["status", "started_at"])
         match.save(update_fields=["status", "started_at"])
+        try:
+            start_live_match(match)
+        except ValidationError:
+            # A live match can still wait for content provisioning; the room state remains valid.
+            pass
     return participant

@@ -64,13 +64,15 @@ def get_practice_participant(session_id, actor) -> MatchParticipant:
     return participant
 
 
-def round_public_state(round_instance: Round, now=None) -> dict:
+def round_public_state(round_instance: Round, now=None, private_state=None, deadline=None) -> dict:
     now = now or timezone.now()
     question = round_instance.question
     translation = question.translations.filter(language=round_instance.match.language).first()
     if translation is None:
         raise ValidationError({"language": "Tur çevirisi bulunamadı."})
-    state = round_instance.private_state or {}
+    state = round_instance.private_state if private_state is None else private_state
+    state = state or {}
+    effective_deadline = deadline or round_instance.deadline
     public_data = dict(round_instance.payload.get("public_payload") or {})
     public_data.update(translation.public_data or {})
     if round_instance.mode == "hangman":
@@ -105,7 +107,7 @@ def round_public_state(round_instance: Round, now=None) -> dict:
         "order": round_instance.order,
         "mode": round_instance.mode,
         "status": round_instance.status,
-        "deadline": round_instance.deadline,
+        "deadline": effective_deadline,
         "server_now": now,
         "prompt": translation.prompt,
         "choices": translation.choices,
@@ -126,8 +128,8 @@ def _answer_value(answer, key=None):
     return answer
 
 
-def _remaining_seconds(round_instance: Round, now) -> int:
-    return max(0, math.floor((round_instance.deadline - now).total_seconds()))
+def _remaining_seconds(round_instance: Round, now, deadline=None) -> int:
+    return max(0, math.floor(((deadline or round_instance.deadline) - now).total_seconds()))
 
 
 def _final_answer(round_instance, participant, answer, result, points, now):
@@ -172,12 +174,13 @@ def _final_answer(round_instance, participant, answer, result, points, now):
     return next_round
 
 
-def _evaluate_round(round_instance: Round, answer, now):
+def _evaluate_round(round_instance: Round, answer, now, private_state=None, deadline=None):
     mode = round_instance.mode
     rules = MODE_RULES[mode]
     question = round_instance.question
     answer_data = question.payload.answer_data or {}
-    state = round_instance.private_state or {}
+    state = round_instance.private_state if private_state is None else private_state
+    state = state or {}
     language = round_instance.match.language
 
     if mode == "hangman":
@@ -200,7 +203,7 @@ def _evaluate_round(round_instance: Round, answer, now):
             guessed.add(normalized_letter)
             state["guessed_letters"] = sorted(guessed)
             if set(character for character in canonical if character.isalpha()).issubset(guessed):
-                remaining = _remaining_seconds(round_instance, now)
+                remaining = _remaining_seconds(round_instance, now, deadline)
                 points = max(0, rules["base_points"] - len(wrong_letters) * rules["wrong_letter_penalty"] - state.get("hint_count", 0) * rules["hint_penalty"])
                 return "correct", points + remaining // rules["time_bonus_divisor"], state
         else:
@@ -217,7 +220,7 @@ def _evaluate_round(round_instance: Round, answer, now):
             elapsed = max(0, int((now - round_instance.created_at).total_seconds()))
             revealed_extra = max(0, min(5, elapsed // rules["entry_reveal_interval"]))
             points = max(0, rules["base_points"] - revealed_extra * rules["revealed_entry_penalty"] - (state["attempts_used"] - 1) * rules["wrong_attempt_penalty"])
-            return "correct", points + min(rules["max_time_bonus"], _remaining_seconds(round_instance, now) // rules["time_bonus_divisor"]), state
+            return "correct", points + min(rules["max_time_bonus"], _remaining_seconds(round_instance, now, deadline) // rules["time_bonus_divisor"]), state
         if state["attempts_used"] >= rules["max_attempts"]:
             return "wrong", 0, state
         return None, 0, state
@@ -275,7 +278,7 @@ def _evaluate_round(round_instance: Round, answer, now):
             state["found_indices"] = sorted(found_indices)
             if len(found_indices) >= hidden_count:
                 points = len(found_indices) * rules["points_per_player"] + min(
-                    rules["time_bonus_cap"], _remaining_seconds(round_instance, now) // rules["time_bonus_divisor"]
+                    rules["time_bonus_cap"], _remaining_seconds(round_instance, now, deadline) // rules["time_bonus_divisor"]
                 )
                 return "correct", points, state
         if state["attempts_used"] >= rules["max_attempts"]:

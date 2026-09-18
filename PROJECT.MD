@@ -3,7 +3,7 @@
 **Çalışma adı:** Futbol Bilgi Oyunu (web + sonraki aşamada mobil)
 **Doküman dili:** Türkçe
 **Hedef okuyucu:** Codex, Claude Code ve insan geliştiriciler
-**Durum:** Faz 3 tamamlandı — içerik modellerinin üzerine sunucu otoriteli oyun motoru, beş modlu pratik API'si ve iki dilli pratik arayüzü eklendi. Karar kaydı: [`docs/phase-0.md`](docs/phase-0.md); faz notları: [`docs/phase-1.md`](docs/phase-1.md), [`docs/phase-2.md`](docs/phase-2.md), [`docs/phase-3.md`](docs/phase-3.md).
+**Durum:** Faz 4 tamamlandı — sunucu otoriteli pratik motorunun üzerine asenkron düello, 2–8 kişilik özel oda, WebSocket tur akışı ve derecesiz çok oyunculu arayüz eklendi. Karar kaydı: [`docs/phase-0.md`](docs/phase-0.md); faz notları: [`docs/phase-1.md`](docs/phase-1.md), [`docs/phase-2.md`](docs/phase-2.md), [`docs/phase-3.md`](docs/phase-3.md), [`docs/phase-4.md`](docs/phase-4.md).
 
 ---
 
@@ -269,10 +269,11 @@ Aşağıdaki tablolar Django modelleri olarak tanımlanır. Tüm şema değişik
 **Oyun**
 
 - `game_sessions` — pratik/canlı/asenkron/oda, mod seti, dil, başlangıç, deadline, durum
-- `matches` — tip (`practice|live_1v1|async_duel|room`), `origin` (`matchmaking|invite|room|practice`), karışık mı, ranked uygun mu, durum, sonuç
+- `matches` — tip (`practice|live_1v1|async_duel|room`), `origin` (`matchmaking|invite|room|practice`), karışık mı, ranked uygun mu, oda kodu/ayarları, durum, sonuç
 - `match_participants` — maç, kullanıcı veya misafir oturumu, skor, bağlantı durumu
 - `rounds` — maç, sıra no, soru, `deadline`, durum
 - `answers` — tur, katılımcı, ham cevap, normalize cevap, sonuç (`correct|wrong|timeout|skipped`), süre (ms), puan
+- `participant_round_states` — katılımcı, sabit tur, katılımcıya özel deadline ve ara cevap durumu
 - `question_exposures` — kullanıcı, soru, tarih — tekrar gösterimi engellemek için
 
 **Derece**
@@ -313,6 +314,15 @@ POST /api/v1/content/imports
 POST /api/v1/practice/sessions            # pratik oyun başlat
 GET  /api/v1/practice/sessions/{id}       # aktif pratik turunu getir
 POST /api/v1/practice/sessions/{id}/answers
+POST /api/v1/duels                         # hesaplı kullanıcı asenkron düello oluşturur
+GET  /api/v1/duels/{id}
+POST /api/v1/duels/{id}/join
+POST /api/v1/duels/{id}/play
+POST /api/v1/rooms                          # misafir veya hesaplı özel oda oluşturur
+GET  /api/v1/rooms/{code}
+POST /api/v1/rooms/{code}/join
+POST /api/v1/rooms/{code}/start
+POST /api/v1/rooms/{code}/answers            # REST fallback; canlı istemci WebSocket kullanır
 POST /api/v1/matchmaking/queue            # ranked/derecesiz kuyruğa gir
 DELETE /api/v1/matchmaking/queue
 POST /api/v1/duels                        # asenkron düello oluştur
@@ -375,7 +385,7 @@ Kurallar:
 | **1 — Temel altyapı** | Django backend, **PostgreSQL şeması ve migration'ları**, REST API, WebSocket altyapısı, Vue uygulaması, hesap ve misafir oturumları. | Web istemcisi API'ye bağlanır; kalıcı kayıtlar PostgreSQL'de tutulur; iki istemci canlı oturuma bağlanır. **Tamamlandı.** |
 | **2 — İçerik yönetimi** | Futbolcu, takım, kariyer, maç, skor ve ilk 11 verilerini PostgreSQL'de modellemek; API içe aktarma, editör onayı, çeviri ve yayın akışı. | Beş mod için onaylı sorular üretilebilir; doğrulanmamış veri oyuncuya gösterilmez. **Tamamlandı.** |
 | **3 — Oyun motoru ve pratik** | Sunucu tarafında soru seçimi, süre, cevap doğrulaması ve puanlama; Vue tarafında beş modun modern, futbol temalı ekranları. | Beş mod iki dilde tek başına baştan sona oynanır. **Tamamlandı.** |
-| **4 — Derecesiz çok oyunculu oyun** | Asenkron düello, davet, özel oda ve canlı derecesiz maçlar; bağlantı kopması ve süresi dolan oyunların ele alınması. | Düello farklı zamanlarda tamamlanır; 2–8 kişi özel odada oynar. |
+| **4 — Derecesiz çok oyunculu oyun** | Asenkron düello, davet, özel oda ve canlı derecesiz maçlar; bağlantı kopması ve süresi dolan oyunların ele alınması. | Düello farklı zamanlarda tamamlanır; 2–8 kişi özel odada oynar. **Tamamlandı.** |
 | **5 — Ranked ve liderlik tablosu** | Canlı eşleştirme, maç sonucu ve ortak derece; derece hareketlerinin **PostgreSQL işlemleriyle atomik** kaydı. | Yalnız uygun maç dereceyi değiştirir; tekrar gelen sonuç aynı maça ikinci kez puan yazmaz. |
 | **6 — Kalite ve kapalı beta** | Oyun, API ve iki tarayıcılı canlı maç testleri; erişilebilirlik, yük, içerik kalitesi ve **PostgreSQL yedekleme/geri yükleme** kontrolleri. | Kritik akışlar ve veri kurtarma doğrulanır; web sürümü kapalı beta için hazırdır. |
 | **7 — Mobil hazırlığı** | REST ve WebSocket sözleşmelerini sürümleyip mobil istemci için belgelemek. | Mobil uygulama aynı backend ve PostgreSQL verilerini API aracılığıyla kullanabilecek şekilde tasarım tamamlanır. |

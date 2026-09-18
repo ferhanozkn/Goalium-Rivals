@@ -33,6 +33,10 @@ class MatchSerializer(serializers.ModelSerializer):
             "language",
             "status",
             "ranked_eligible",
+            "max_players",
+            "room_code",
+            "settings",
+            "result",
             "participants",
             "created_at",
             "started_at",
@@ -92,3 +96,55 @@ class MatchJoinResponseSerializer(serializers.Serializer):
 
 class MatchJoinRequestSerializer(serializers.Serializer):
     pass
+
+
+class DuelCreateSerializer(serializers.Serializer):
+    language = serializers.ChoiceField(choices=["tr", "en"], default="tr")
+    modes = serializers.ListField(child=serializers.ChoiceField(choices=["hangman", "career_path", "timed_trivia", "historical_score", "missing_lineup"]), allow_empty=False, required=False)
+
+
+class MultiplayerAnswerSerializer(serializers.Serializer):
+    round_id = serializers.UUIDField()
+    answer = serializers.JSONField()
+
+
+class RoomCreateSerializer(serializers.Serializer):
+    language = serializers.ChoiceField(choices=["tr", "en"], default="tr")
+    is_mixed = serializers.BooleanField(default=True)
+    mode = serializers.ChoiceField(choices=["hangman", "career_path", "timed_trivia", "historical_score", "missing_lineup"], required=False, allow_null=True)
+    round_count = serializers.IntegerField(min_value=1, max_value=5, default=5)
+    duration_multiplier = serializers.FloatField(min_value=0.5, max_value=2.0, default=1.0)
+
+    def validate(self, attrs):
+        if not attrs.get("is_mixed") and not attrs.get("mode"):
+            raise serializers.ValidationError({"mode": "Tek modlu oda için mod seçilmelidir."})
+        return attrs
+
+
+class RoomJoinSerializer(serializers.Serializer):
+    pass
+
+
+class RoomResponseSerializer(serializers.Serializer):
+    match = MatchSerializer()
+    participant_id = serializers.UUIDField()
+    round = serializers.JSONField(allow_null=True)
+    actor_type = serializers.ChoiceField(choices=["guest", "user"])
+    expires_at = serializers.DateTimeField(allow_null=True)
+
+
+class DuelResponseSerializer(serializers.Serializer):
+    match = MatchSerializer()
+    participant_id = serializers.UUIDField()
+    round = serializers.JSONField(allow_null=True)
+    expires_at = serializers.DateTimeField(allow_null=True)
+
+
+class MultiplayerAnswerResponseSerializer(serializers.Serializer):
+    phase = serializers.ChoiceField(choices=["progress", "waiting", "advanced", "finished"])
+    result = serializers.ChoiceField(choices=["correct", "wrong", "timeout", "skipped", "active"])
+    points = serializers.IntegerField()
+    score = serializers.IntegerField()
+    round = serializers.JSONField()
+    next_round = serializers.JSONField(allow_null=True)
+    match = serializers.JSONField()

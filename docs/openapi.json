@@ -271,6 +271,106 @@ paths:
               schema:
                 $ref: '#/components/schemas/QuestionPublic'
           description: ''
+  /api/v1/duels:
+    post:
+      operationId: duels_create
+      tags:
+      - multiplayer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DuelCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/DuelCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DuelCreate'
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DuelResponse'
+          description: ''
+  /api/v1/duels/{duel_id}:
+    get:
+      operationId: duels_retrieve
+      parameters:
+      - in: path
+        name: duel_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - multiplayer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DuelResponse'
+          description: ''
+  /api/v1/duels/{duel_id}/join:
+    post:
+      operationId: duels_join_create
+      parameters:
+      - in: path
+        name: duel_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - multiplayer
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DuelResponse'
+          description: ''
+  /api/v1/duels/{duel_id}/play:
+    post:
+      operationId: duels_play_create
+      parameters:
+      - in: path
+        name: duel_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - multiplayer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MultiplayerAnswer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MultiplayerAnswer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MultiplayerAnswer'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiplayerAnswerResponse'
+          description: ''
   /api/v1/guest/session:
     post:
       operationId: guest_session_create
@@ -483,6 +583,128 @@ paths:
               schema:
                 $ref: '#/components/schemas/PracticeAnswerResponse'
           description: ''
+  /api/v1/rooms:
+    post:
+      operationId: rooms_create
+      tags:
+      - multiplayer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RoomCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RoomCreate'
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomResponse'
+          description: ''
+  /api/v1/rooms/{room_code}:
+    get:
+      operationId: rooms_retrieve
+      parameters:
+      - in: path
+        name: room_code
+        schema:
+          type: string
+        required: true
+      tags:
+      - multiplayer
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomResponse'
+          description: ''
+  /api/v1/rooms/{room_code}/answers:
+    post:
+      operationId: rooms_answers_create
+      parameters:
+      - in: path
+        name: room_code
+        schema:
+          type: string
+        required: true
+      tags:
+      - multiplayer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MultiplayerAnswer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MultiplayerAnswer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MultiplayerAnswer'
+        required: true
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiplayerAnswerResponse'
+          description: ''
+  /api/v1/rooms/{room_code}/join:
+    post:
+      operationId: rooms_join_create
+      parameters:
+      - in: path
+        name: room_code
+        schema:
+          type: string
+        required: true
+      tags:
+      - multiplayer
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomResponse'
+          description: ''
+  /api/v1/rooms/{room_code}/start:
+    post:
+      operationId: rooms_start_create
+      parameters:
+      - in: path
+        name: room_code
+        schema:
+          type: string
+        required: true
+      tags:
+      - multiplayer
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoomResponse'
+          description: ''
 components:
   schemas:
     ActorTypeEnum:
@@ -513,6 +735,36 @@ components:
         * `easy` - Easy
         * `medium` - Medium
         * `hard` - Hard
+    DuelCreate:
+      type: object
+      properties:
+        language:
+          allOf:
+          - $ref: '#/components/schemas/Language906Enum'
+          default: tr
+        modes:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModesEnum'
+    DuelResponse:
+      type: object
+      properties:
+        match:
+          $ref: '#/components/schemas/Match'
+        participant_id:
+          type: string
+          format: uuid
+        round:
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - expires_at
+      - match
+      - participant_id
+      - round
     GameSession:
       type: object
       properties:
@@ -821,6 +1073,17 @@ components:
         ranked_eligible:
           type: boolean
           readOnly: true
+        max_players:
+          type: integer
+          readOnly: true
+        room_code:
+          type: string
+          readOnly: true
+          nullable: true
+        settings:
+          readOnly: true
+        result:
+          readOnly: true
         participants:
           type: array
           items:
@@ -848,9 +1111,13 @@ components:
       - is_mixed
       - language
       - match_type
+      - max_players
       - origin
       - participants
       - ranked_eligible
+      - result
+      - room_code
+      - settings
       - started_at
       - status
     MatchCreate:
@@ -948,6 +1215,34 @@ components:
         * `practice` - Practice
         * `async_duel` - Async duel
         * `room` - Room
+    Mode278Enum:
+      enum:
+      - hangman
+      - career_path
+      - timed_trivia
+      - historical_score
+      - missing_lineup
+      type: string
+      description: |-
+        * `hangman` - hangman
+        * `career_path` - career_path
+        * `timed_trivia` - timed_trivia
+        * `historical_score` - historical_score
+        * `missing_lineup` - missing_lineup
+    ModeA7dEnum:
+      enum:
+      - hangman
+      - career_path
+      - timed_trivia
+      - historical_score
+      - missing_lineup
+      type: string
+      description: |-
+        * `hangman` - Hangman
+        * `career_path` - Career path
+        * `timed_trivia` - Timed trivia
+        * `historical_score` - Historical score
+        * `missing_lineup` - Missing lineup
     ModeDefinition:
       type: object
       properties:
@@ -964,7 +1259,7 @@ components:
       - duration_seconds
       - id
       - title_key
-    ModeEnum:
+    ModesEnum:
       enum:
       - hangman
       - career_path
@@ -973,11 +1268,59 @@ components:
       - missing_lineup
       type: string
       description: |-
-        * `hangman` - Hangman
-        * `career_path` - Career path
-        * `timed_trivia` - Timed trivia
-        * `historical_score` - Historical score
-        * `missing_lineup` - Missing lineup
+        * `hangman` - hangman
+        * `career_path` - career_path
+        * `timed_trivia` - timed_trivia
+        * `historical_score` - historical_score
+        * `missing_lineup` - missing_lineup
+    MultiplayerAnswer:
+      type: object
+      properties:
+        round_id:
+          type: string
+          format: uuid
+        answer: {}
+      required:
+      - answer
+      - round_id
+    MultiplayerAnswerResponse:
+      type: object
+      properties:
+        phase:
+          $ref: '#/components/schemas/PhaseEnum'
+        result:
+          $ref: '#/components/schemas/ResultEnum'
+        points:
+          type: integer
+        score:
+          type: integer
+        round: {}
+        next_round:
+          nullable: true
+        match: {}
+      required:
+      - match
+      - next_round
+      - phase
+      - points
+      - result
+      - round
+      - score
+    NullEnum:
+      enum:
+      - null
+    PhaseEnum:
+      enum:
+      - progress
+      - waiting
+      - advanced
+      - finished
+      type: string
+      description: |-
+        * `progress` - progress
+        * `waiting` - waiting
+        * `advanced` - advanced
+        * `finished` - finished
     PracticeAnswerResponse:
       type: object
       properties:
@@ -1090,7 +1433,7 @@ components:
           readOnly: true
           nullable: true
         mode:
-          $ref: '#/components/schemas/ModeEnum'
+          $ref: '#/components/schemas/ModeA7dEnum'
         difficulty:
           $ref: '#/components/schemas/DifficultyEnum'
         status:
@@ -1184,7 +1527,7 @@ components:
           readOnly: true
         mode:
           allOf:
-          - $ref: '#/components/schemas/ModeEnum'
+          - $ref: '#/components/schemas/ModeA7dEnum'
           readOnly: true
         difficulty:
           allOf:
@@ -1249,6 +1592,54 @@ components:
         * `timeout` - timeout
         * `skipped` - skipped
         * `active` - active
+    RoomCreate:
+      type: object
+      properties:
+        language:
+          allOf:
+          - $ref: '#/components/schemas/Language906Enum'
+          default: tr
+        is_mixed:
+          type: boolean
+          default: true
+        mode:
+          nullable: true
+          oneOf:
+          - $ref: '#/components/schemas/Mode278Enum'
+          - $ref: '#/components/schemas/NullEnum'
+        round_count:
+          type: integer
+          maximum: 5
+          minimum: 1
+          default: 5
+        duration_multiplier:
+          type: number
+          format: double
+          maximum: 2.0
+          minimum: 0.5
+          default: 1.0
+    RoomResponse:
+      type: object
+      properties:
+        match:
+          $ref: '#/components/schemas/Match'
+        participant_id:
+          type: string
+          format: uuid
+        round:
+          nullable: true
+        actor_type:
+          $ref: '#/components/schemas/ActorTypeEnum'
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - actor_type
+      - expires_at
+      - match
+      - participant_id
+      - round
     SourceReference:
       type: object
       properties:

@@ -20,6 +20,7 @@ export interface Participant {
   display_name: string;
   score: number;
   connected: boolean;
+  completed?: boolean;
 }
 
 export interface Match {
@@ -35,6 +36,10 @@ export interface Match {
   created_at: string;
   started_at: string | null;
   finished_at: string | null;
+  max_players?: number;
+  room_code?: string | null;
+  settings?: Record<string, unknown>;
+  result?: Record<string, unknown>;
 }
 
 export interface PracticeRound {
@@ -73,4 +78,35 @@ export interface PracticeAnswerResponse {
   points: number;
   score: number;
   next_round: PracticeRound | null;
+}
+
+export interface MultiplayerResponse {
+  match: Match;
+  participant_id: string;
+  round: PracticeRound | null;
+  actor_type?: "guest" | "user";
+  expires_at?: string | null;
+}
+
+export interface MultiplayerAnswerResponse {
+  phase: "progress" | "waiting" | "advanced" | "finished";
+  result: "correct" | "wrong" | "timeout" | "skipped" | "active";
+  points: number;
+  score: number;
+  round: PracticeRound;
+  next_round: PracticeRound | null;
+  match: Match;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  display_name: string;
+  preferred_language: Language;
+  created_at: string;
+}
+
+export interface AuthResponse {
+  user: AuthUser;
+  tokens: { access: string; refresh: string };
 }

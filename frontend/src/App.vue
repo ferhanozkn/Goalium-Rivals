@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
 import PracticeView from "./components/PracticeView.vue";
+import MultiplayerView from "./components/MultiplayerView.vue";
 import { createLiveMatch, fetchModes } from "./lib/api";
 import { useSessionStore } from "./stores/session";
 import type { Language, Match, ModeDefinition } from "./types";
@@ -14,7 +15,7 @@ const match = ref<Match | null>(null);
 const loading = ref(true);
 const error = ref("");
 const notice = ref("");
-const view = ref<"home" | "practice">("home");
+const view = ref<"home" | "practice" | "multiplayer">("home");
 const socketStatus = ref<"disconnected" | "connecting" | "connected">("disconnected");
 let socket: WebSocket | null = null;
 
@@ -32,6 +33,17 @@ function openPractice() {
 }
 
 function closePractice() {
+  view.value = "home";
+}
+
+function openMultiplayer() {
+  error.value = "";
+  notice.value = "";
+  view.value = "multiplayer";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function closeMultiplayer() {
   view.value = "home";
 }
 
@@ -107,6 +119,7 @@ onBeforeUnmount(() => socket?.close());
         <a href="#modes">{{ t("navigation.modes") }}</a>
         <a href="#live">{{ t("navigation.live") }}</a>
         <a href="#practice" @click.prevent="openPractice">{{ t("navigation.practice") }}</a>
+        <a href="#multiplayer" @click.prevent="openMultiplayer">{{ t("multiplayer.eyebrow") }}</a>
         <a href="#session">{{ t("navigation.account") }}</a>
       </nav>
       <div class="language-switcher" :aria-label="t('common.language')">
@@ -116,6 +129,7 @@ onBeforeUnmount(() => socket?.close());
     </header>
 
     <PracticeView v-if="view === 'practice'" :language="currentLanguage" :modes="modes" @back="closePractice" />
+    <MultiplayerView v-else-if="view === 'multiplayer'" :language="currentLanguage" :modes="modes" @back="closeMultiplayer" />
 
     <template v-else>
       <section class="hero-grid">
@@ -126,6 +140,7 @@ onBeforeUnmount(() => socket?.close());
         <div class="hero-actions">
           <button class="button button-primary" type="button" :disabled="session.loading" @click="startMatch">{{ t("home.createMatch") }}</button>
           <button class="button button-quiet" type="button" :disabled="session.loading" @click="openPractice">{{ t("home.practice") }}</button>
+          <button class="button button-quiet" type="button" :disabled="session.loading" @click="openMultiplayer">{{ t("home.multiplayer") }}</button>
           <button class="button button-quiet" type="button" :disabled="session.loading" @click="startGuest">{{ t("home.createGuest") }}</button>
         </div>
         <p v-if="notice" class="notice" role="status">{{ notice }}</p>

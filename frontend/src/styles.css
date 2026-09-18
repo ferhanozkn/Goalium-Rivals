@@ -129,6 +129,25 @@ h2 { margin-bottom: 0; font-size: clamp(1.9rem, 4vw, 3.8rem); letter-spacing: -0
 .practice-complete { min-height: 65vh; display: grid; align-content: center; justify-items: start; }
 .practice-complete h2 { margin-bottom: 1rem; }
 .practice-complete > p:not(.eyebrow) { color: var(--muted); font-size: 0.85rem; }
+.multiplayer-shell { min-height: calc(100vh - 72px); padding: 2rem 0 8vh; }
+.multiplayer-setup, .multiplayer-game { max-width: 1120px; margin: 0 auto; padding-top: 7vh; }
+.multiplayer-tabs { display: flex; border-bottom: 1px solid var(--line); margin-bottom: 2rem; }
+.multiplayer-tabs button, .segmented-control button { border: 0; border-right: 1px solid var(--line); background: transparent; color: var(--muted); padding: 0.8rem 1rem; font-size: 0.72rem; }
+.multiplayer-tabs button.active, .segmented-control button.active { color: var(--bg); background: var(--signal); }
+.multiplayer-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.multiplayer-card { min-height: 300px; display: flex; flex-direction: column; align-items: flex-start; gap: 1rem; }
+.multiplayer-card h3 { margin-bottom: 0; font-size: 1.25rem; font-weight: 500; letter-spacing: -0.06em; }
+.card-copy { color: var(--muted); font-size: 0.75rem; line-height: 1.7; max-width: 430px; }
+.segmented-control { display: flex; flex-wrap: wrap; border: 1px solid var(--line); }
+.wide-input { width: 100%; border: 1px solid var(--line); border-radius: 0; background: var(--bg); color: var(--text); padding: 0.8rem; font: inherit; font-size: 0.74rem; outline: 0; }
+.wide-input:focus { border-color: var(--signal); }
+.multiplayer-rail { display: grid; grid-template-columns: 1.5fr 1fr 0.75fr 0.5fr; gap: 1rem; border-top: 1px solid var(--signal); border-bottom: 1px solid var(--line); padding: 0.85rem 0; color: var(--muted); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.multiplayer-rail strong, .room-code { color: var(--signal); font-weight: 500; }
+.multiplayer-lobby { max-width: 700px; padding: 12vh 0; }
+.multiplayer-lobby h2, .multiplayer-play h2 { margin-bottom: 1rem; }
+.multiplayer-lobby > p:not(.eyebrow) { color: var(--muted); font-size: 0.8rem; }
+.participant-list { border-top: 1px solid var(--line); margin: 2rem 0; }
+.multiplayer-play { padding-top: 7vh; max-width: 850px; }
 
 @media (max-width: 900px) {
   .hero-grid { grid-template-columns: 1fr; padding-top: 8vh; }
@@ -136,6 +155,8 @@ h2 { margin-bottom: 0; font-size: clamp(1.9rem, 4vw, 3.8rem); letter-spacing: -0
   .mode-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .mode-card { min-height: 220px; border-bottom: 0; }
   .practice-mode-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .multiplayer-grid { grid-template-columns: 1fr; }
+  .multiplayer-rail { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 600px) {
   .app-shell { padding: 0 1rem; }
@@ -154,4 +175,5 @@ h2 { margin-bottom: 0; font-size: clamp(1.9rem, 4vw, 3.8rem); letter-spacing: -0
   .choice-grid { grid-template-columns: 1fr; }
   .hint-row, .score-inputs { display: grid; align-items: start; }
   .score-separator { display: none; }
+  .multiplayer-rail { grid-template-columns: 1fr; gap: 0.5rem; }
 }

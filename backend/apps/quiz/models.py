@@ -44,6 +44,9 @@ class Match(models.Model):
     language = models.CharField(max_length=2, choices=GameSession.LANGUAGE_CHOICES, default="tr")
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="waiting")
     max_players = models.PositiveSmallIntegerField(default=2)
+    room_code = models.CharField(max_length=8, unique=True, null=True, blank=True)
+    settings = models.JSONField(default=dict)
+    result = models.JSONField(default=dict)
     created_at = models.DateTimeField(auto_now_add=True)
     started_at = models.DateTimeField(null=True, blank=True)
     finished_at = models.DateTimeField(null=True, blank=True)
@@ -117,3 +120,20 @@ class Answer(models.Model):
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=["round", "participant"], name="unique_answer_per_round_participant")]
+
+
+class ParticipantRoundState(models.Model):
+    STATUS_CHOICES = (("active", "Active"), ("finished", "Finished"), ("timeout", "Timeout"))
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    participant = models.ForeignKey(MatchParticipant, on_delete=models.CASCADE, related_name="round_states")
+    round = models.ForeignKey(Round, on_delete=models.CASCADE, related_name="participant_states")
+    private_state = models.JSONField(default=dict)
+    deadline = models.DateTimeField()
+    status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="active")
+    started_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["participant", "round"], name="unique_participant_round_state")]
+        ordering = ["round__order"]

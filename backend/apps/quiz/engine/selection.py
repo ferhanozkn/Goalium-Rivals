@@ -8,7 +8,7 @@ from apps.quiz.engine.constants import mode_duration
 from apps.quiz.models import GameSession, Match, Round
 
 
-def select_question(session: GameSession, mode: str) -> Question:
+def select_question(session: GameSession, mode: str, allow_reuse: bool = False) -> Question:
     used_question_ids = session.match.rounds.exclude(question_id=None).values_list("question_id", flat=True)
     questions = (
         Question.objects.filter(status="published", mode=mode, translations__language=session.language)
@@ -17,7 +17,7 @@ def select_question(session: GameSession, mode: str) -> Question:
         .order_by("created_at")
     )
     question = questions.first()
-    if question is None and mode == "timed_trivia":
+    if question is None and (mode == "timed_trivia" or allow_reuse):
         question = (
             Question.objects.filter(status="published", mode=mode, translations__language=session.language)
             .prefetch_related("translations")
@@ -29,14 +29,23 @@ def select_question(session: GameSession, mode: str) -> Question:
     return question
 
 
-def create_round(session: GameSession, match: Match, mode: str, order: int, deadline=None) -> Round:
-    question = select_question(session, mode)
+def create_round(
+    session: GameSession,
+    match: Match,
+    mode: str,
+    order: int,
+    deadline=None,
+    status="active",
+    allow_reuse=False,
+    update_session_deadline=True,
+) -> Round:
+    question = select_question(session, mode, allow_reuse=allow_reuse)
     translation = question.translations.filter(language=session.language).first()
     if translation is None:
         raise ValidationError({"language": "Seçilen dilde soru çevirisi bulunamadı."})
     now = timezone.now()
     deadline = deadline or now + timedelta(seconds=mode_duration(mode))
-    if mode == "timed_trivia" and session.deadline != deadline:
+    if update_session_deadline and mode == "timed_trivia" and session.deadline != deadline:
         session.deadline = deadline
         session.save(update_fields=["deadline"])
     return Round.objects.create(
@@ -47,5 +56,5 @@ def create_round(session: GameSession, match: Match, mode: str, order: int, dead
         payload={"public_payload": question.payload.public_payload},
         private_state={},
         deadline=deadline,
-        status="active",
+        status=status,
     )

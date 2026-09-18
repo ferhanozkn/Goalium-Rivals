@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.exceptions import PermissionDenied
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from drf_spectacular.utils import extend_schema
 
@@ -22,13 +23,58 @@ from apps.quiz.serializers import (
     PracticeSessionCreateSerializer,
     PracticeSessionDetailSerializer,
     PracticeSessionResponseSerializer,
+    DuelCreateSerializer,
+    DuelResponseSerializer,
+    MultiplayerAnswerSerializer,
+    MultiplayerAnswerResponseSerializer,
+    RoomCreateSerializer,
+    RoomJoinSerializer,
+    RoomResponseSerializer,
 )
-from apps.quiz.engine import create_practice_session, get_practice_participant, submit_practice_answer
+from apps.quiz.engine import (
+    create_duel,
+    create_practice_session,
+    create_room,
+    expire_duel,
+    get_practice_participant,
+    join_duel,
+    join_room,
+    participant_for_match,
+    start_room,
+    submit_multiplayer_answer,
+    submit_practice_answer,
+)
 from apps.quiz.engine.practice import PracticeRoundConflict, round_public_state
+from apps.quiz.engine.multiplayer import MultiplayerConflict
 from apps.quiz.services import create_live_match, join_live_match, request_actor
 
 
 ACTOR_AUTHENTICATION = [JWTAuthentication, GuestTokenAuthentication]
+
+
+def _user_only(request):
+    if hasattr(request, "guest_session") or not getattr(request.user, "is_authenticated", False):
+        raise PermissionDenied("Bu işlem hesaplı kullanıcı gerektirir.")
+    return request.user
+
+
+def _multiplayer_response(match, participant, actor_type):
+    match.refresh_from_db()
+    state = participant.round_states.select_related("round", "round__question").filter(status="active").order_by("round__order").first()
+    return {
+        "match": MatchSerializer(match).data,
+        "participant_id": participant.id,
+        "round": round_public_state(state.round, private_state=state.private_state, deadline=state.deadline) if state else None,
+        "actor_type": actor_type,
+        "expires_at": match.game_session.deadline,
+    }
+
+
+def _multiplayer_error(exc, status_code=status.HTTP_400_BAD_REQUEST):
+    return Response(
+        {"detail": exc.message_dict if hasattr(exc, "message_dict") else exc.messages},
+        status=status_code,
+    )
 
 
 @extend_schema(responses={200: ModeDefinitionSerializer(many=True)}, tags=["quiz"])
@@ -120,6 +166,152 @@ def practice_answers(request, session_id):
             "next_round": round_public_state(next_round) if next_round else None,
         }
     )
+
+
+@extend_schema(request=DuelCreateSerializer, responses={201: DuelResponseSerializer}, tags=["multiplayer"])
+@api_view(["POST"])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def duels(request):
+    user = _user_only(request)
+    serializer = DuelCreateSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    try:
+        match, participant = create_duel(user, **serializer.validated_data)
+    except (ValidationError, MultiplayerConflict) as exc:
+        return _multiplayer_error(exc)
+    return Response(_multiplayer_response(match, participant, "user"), status=status.HTTP_201_CREATED)
+
+
+@extend_schema(responses={200: DuelResponseSerializer}, tags=["multiplayer"])
+@api_view(["GET"])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def duel_detail(request, duel_id):
+    user = _user_only(request)
+    try:
+        match = expire_duel(duel_id)
+    except Match.DoesNotExist:
+        return Response({"detail": "Düello bulunamadı."}, status=status.HTTP_404_NOT_FOUND)
+    participant = participant_for_match(match, user=user)
+    if participant is None:
+        return Response({"detail": "Bu düelloya erişim izniniz yok."}, status=status.HTTP_403_FORBIDDEN)
+    return Response(_multiplayer_response(match, participant, "user"))
+
+
+@extend_schema(request=RoomJoinSerializer, responses={200: DuelResponseSerializer}, tags=["multiplayer"])
+@api_view(["POST"])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def duel_join(request, duel_id):
+    user = _user_only(request)
+    try:
+        match, participant = join_duel(duel_id, user)
+    except Match.DoesNotExist:
+        return Response({"detail": "Düello bulunamadı."}, status=status.HTTP_404_NOT_FOUND)
+    except (ValidationError, MultiplayerConflict) as exc:
+        return _multiplayer_error(exc)
+    return Response(_multiplayer_response(match, participant, "user"))
+
+
+@extend_schema(request=MultiplayerAnswerSerializer, responses={200: MultiplayerAnswerResponseSerializer}, tags=["multiplayer"])
+@api_view(["POST"])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def duel_play(request, duel_id):
+    user = _user_only(request)
+    serializer = MultiplayerAnswerSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    match = Match.objects.filter(id=duel_id, match_type="async_duel").first()
+    if match is None:
+        return Response({"detail": "Düello bulunamadı."}, status=status.HTTP_404_NOT_FOUND)
+    participant = participant_for_match(match, user=user)
+    if participant is None:
+        return Response({"detail": "Bu düelloya erişim izniniz yok."}, status=status.HTTP_403_FORBIDDEN)
+    try:
+        result = submit_multiplayer_answer(duel_id, participant.id, **serializer.validated_data)
+    except (ValidationError, MultiplayerConflict) as exc:
+        return _multiplayer_error(exc)
+    return Response(result)
+
+
+@extend_schema(request=RoomCreateSerializer, responses={201: RoomResponseSerializer}, tags=["multiplayer"])
+@api_view(["POST"])
+@authentication_classes(ACTOR_AUTHENTICATION)
+@permission_classes([IsAuthenticated])
+def rooms(request):
+    actor = request_actor(request)
+    serializer = RoomCreateSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    try:
+        match = create_room(actor, **serializer.validated_data)
+    except (ValidationError, MultiplayerConflict) as exc:
+        return _multiplayer_error(exc)
+    participant = match.participants.get(**({"user": actor["user"]} if actor["user"] else {"guest_session": actor["guest_session"]}))
+    return Response(_multiplayer_response(match, participant, "guest" if actor["guest_session"] else "user"), status=status.HTTP_201_CREATED)
+
+
+@extend_schema(responses={200: RoomResponseSerializer}, tags=["multiplayer"])
+@api_view(["GET"])
+@authentication_classes(ACTOR_AUTHENTICATION)
+@permission_classes([IsAuthenticated])
+def room_detail(request, room_code):
+    actor = request_actor(request)
+    match = Match.objects.filter(room_code=room_code.upper(), match_type="room").first()
+    if match is None:
+        return Response({"detail": "Oda bulunamadı."}, status=status.HTTP_404_NOT_FOUND)
+    participant = participant_for_match(match, actor=actor)
+    if participant is None:
+        return Response({"detail": "Bu odaya erişim izniniz yok."}, status=status.HTTP_403_FORBIDDEN)
+    return Response(_multiplayer_response(match, participant, "guest" if actor["guest_session"] else "user"))
+
+
+@extend_schema(request=RoomJoinSerializer, responses={200: RoomResponseSerializer}, tags=["multiplayer"])
+@api_view(["POST"])
+@authentication_classes(ACTOR_AUTHENTICATION)
+@permission_classes([IsAuthenticated])
+def room_join(request, room_code):
+    actor = request_actor(request)
+    try:
+        match, participant = join_room(room_code, actor)
+    except (ValidationError, MultiplayerConflict) as exc:
+        return _multiplayer_error(exc)
+    return Response(_multiplayer_response(match, participant, "guest" if actor["guest_session"] else "user"))
+
+
+@extend_schema(request=RoomJoinSerializer, responses={200: RoomResponseSerializer}, tags=["multiplayer"])
+@api_view(["POST"])
+@authentication_classes(ACTOR_AUTHENTICATION)
+@permission_classes([IsAuthenticated])
+def room_start(request, room_code):
+    actor = request_actor(request)
+    try:
+        match = start_room(room_code, actor)
+    except (ValidationError, MultiplayerConflict) as exc:
+        return _multiplayer_error(exc)
+    participant = participant_for_match(match, actor=actor)
+    return Response(_multiplayer_response(match, participant, "guest" if actor["guest_session"] else "user"))
+
+
+@extend_schema(request=MultiplayerAnswerSerializer, responses={200: MultiplayerAnswerResponseSerializer}, tags=["multiplayer"])
+@api_view(["POST"])
+@authentication_classes(ACTOR_AUTHENTICATION)
+@permission_classes([IsAuthenticated])
+def room_answers(request, room_code):
+    actor = request_actor(request)
+    serializer = MultiplayerAnswerSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    match = Match.objects.filter(room_code=room_code.upper(), match_type="room").first()
+    if match is None:
+        return Response({"detail": "Oda bulunamadı."}, status=status.HTTP_404_NOT_FOUND)
+    participant = participant_for_match(match, actor=actor)
+    if participant is None:
+        return Response({"detail": "Bu odaya erişim izniniz yok."}, status=status.HTTP_403_FORBIDDEN)
+    try:
+        result = submit_multiplayer_answer(match.id, participant.id, **serializer.validated_data)
+    except (ValidationError, MultiplayerConflict) as exc:
+        return _multiplayer_error(exc)
+    return Response(result)
 
 
 @extend_schema(request=MatchCreateSerializer, responses={201: MatchSerializer}, tags=["quiz"])
