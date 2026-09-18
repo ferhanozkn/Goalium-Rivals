@@ -48,7 +48,7 @@ class MatchSerializer(serializers.ModelSerializer):
 class MatchCreateSerializer(serializers.Serializer):
     language = serializers.ChoiceField(choices=["tr", "en"], default="tr")
     is_mixed = serializers.BooleanField(default=True)
-    origin = serializers.ChoiceField(choices=["invite", "matchmaking"], default="invite")
+    origin = serializers.ChoiceField(choices=["invite"], default="invite")
 
 
 class PracticeSessionCreateSerializer(serializers.Serializer):

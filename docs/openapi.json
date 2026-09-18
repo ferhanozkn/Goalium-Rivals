@@ -398,6 +398,36 @@ paths:
               schema:
                 $ref: '#/components/schemas/GuestSessionResponse'
           description: ''
+  /api/v1/leaderboard:
+    get:
+      operationId: leaderboard_retrieve
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: period
+        schema:
+          type: string
+          enum:
+          - global
+          - season
+      - in: query
+        name: season
+        schema:
+          type: string
+      tags:
+      - ranking
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaderboardResponse'
+          description: ''
   /api/v1/matches:
     post:
       operationId: matches_create
@@ -446,6 +476,39 @@ paths:
               schema:
                 $ref: '#/components/schemas/Match'
           description: ''
+  /api/v1/matches/{match_id}/answers:
+    post:
+      operationId: matches_answers_create
+      parameters:
+      - in: path
+        name: match_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - matchmaking
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MultiplayerAnswer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MultiplayerAnswer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MultiplayerAnswer'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MultiplayerAnswerResponse'
+          description: ''
   /api/v1/matches/{match_id}/join:
     post:
       operationId: matches_join_create
@@ -468,6 +531,70 @@ paths:
               schema:
                 $ref: '#/components/schemas/MatchJoinResponse'
           description: ''
+  /api/v1/matchmaking/queue:
+    post:
+      operationId: matchmaking_queue_create
+      tags:
+      - matchmaking
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchmakingQueue'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MatchmakingQueue'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MatchmakingQueue'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchmakingResponse'
+          description: ''
+    delete:
+      operationId: matchmaking_queue_destroy
+      parameters:
+      - in: query
+        name: language
+        schema:
+          type: string
+          enum:
+          - en
+          - tr
+      tags:
+      - matchmaking
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/matchmaking/queue/status:
+    get:
+      operationId: matchmaking_queue_status_retrieve
+      parameters:
+      - in: query
+        name: language
+        schema:
+          type: string
+          enum:
+          - en
+          - tr
+      tags:
+      - matchmaking
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchmakingResponse'
+          description: ''
   /api/v1/me:
     get:
       operationId: me_retrieve
@@ -482,6 +609,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/User'
+          description: ''
+  /api/v1/me/stats:
+    get:
+      operationId: me_stats_retrieve
+      tags:
+      - ranking
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RatingStats'
           description: ''
   /api/v1/modes:
     get:
@@ -1018,6 +1159,54 @@ components:
       description: |-
         * `tr` - tr
         * `en` - en
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+        user_id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+        rating:
+          type: integer
+        matches_played:
+          type: integer
+        wins:
+          type: integer
+        draws:
+          type: integer
+        losses:
+          type: integer
+        in_placement:
+          type: boolean
+      required:
+      - display_name
+      - draws
+      - in_placement
+      - losses
+      - matches_played
+      - rank
+      - rating
+      - user_id
+      - wins
+    LeaderboardResponse:
+      type: object
+      properties:
+        period:
+          $ref: '#/components/schemas/PeriodEnum'
+        season:
+          type: string
+          nullable: true
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/LeaderboardEntry'
+      required:
+      - entries
+      - period
+      - season
     LicenseStatus56aEnum:
       enum:
       - pending
@@ -1137,11 +1326,8 @@ components:
     MatchCreateOriginEnum:
       enum:
       - invite
-      - matchmaking
       type: string
-      description: |-
-        * `invite` - invite
-        * `matchmaking` - matchmaking
+      description: '* `invite` - invite'
     MatchJoinResponse:
       type: object
       properties:
@@ -1215,6 +1401,42 @@ components:
         * `practice` - Practice
         * `async_duel` - Async duel
         * `room` - Room
+    MatchmakingQueue:
+      type: object
+      properties:
+        language:
+          allOf:
+          - $ref: '#/components/schemas/Language906Enum'
+          default: tr
+    MatchmakingResponse:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/MatchmakingResponseStatusEnum'
+        queue:
+          type: string
+        position:
+          type: integer
+          nullable: true
+        match: {}
+        participant_id:
+          type: string
+          format: uuid
+        round:
+          nullable: true
+      required:
+      - queue
+      - status
+    MatchmakingResponseStatusEnum:
+      enum:
+      - idle
+      - queued
+      - matched
+      type: string
+      description: |-
+        * `idle` - idle
+        * `queued` - queued
+        * `matched` - matched
     Mode278Enum:
       enum:
       - hangman
@@ -1309,6 +1531,14 @@ components:
     NullEnum:
       enum:
       - null
+    PeriodEnum:
+      enum:
+      - global
+      - season
+      type: string
+      description: |-
+        * `global` - global
+        * `season` - season
     PhaseEnum:
       enum:
       - progress
@@ -1558,6 +1788,43 @@ components:
       required:
       - language
       - prompt
+    RatingStats:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+        rating:
+          type: integer
+        matches_played:
+          type: integer
+        wins:
+          type: integer
+        draws:
+          type: integer
+        losses:
+          type: integer
+        in_placement:
+          type: boolean
+        global_rank:
+          type: integer
+          nullable: true
+        season_rank:
+          type: integer
+          nullable: true
+      required:
+      - display_name
+      - draws
+      - global_rank
+      - in_placement
+      - losses
+      - matches_played
+      - rating
+      - season_rank
+      - user_id
+      - wins
     Register:
       type: object
       properties:

@@ -20,4 +20,5 @@ urlpatterns = [
     path("matches", views.matches, name="matches"),
     path("matches/<uuid:match_id>", views.match_detail, name="match-detail"),
     path("matches/<uuid:match_id>/join", views.match_join, name="match-join"),
+    path("matches/<uuid:match_id>/answers", views.match_answers, name="match-answers"),
 ]

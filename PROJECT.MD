@@ -3,7 +3,7 @@
 **Çalışma adı:** Futbol Bilgi Oyunu (web + sonraki aşamada mobil)
 **Doküman dili:** Türkçe
 **Hedef okuyucu:** Codex, Claude Code ve insan geliştiriciler
-**Durum:** Faz 4 tamamlandı — sunucu otoriteli pratik motorunun üzerine asenkron düello, 2–8 kişilik özel oda, WebSocket tur akışı ve derecesiz çok oyunculu arayüz eklendi. Karar kaydı: [`docs/phase-0.md`](docs/phase-0.md); faz notları: [`docs/phase-1.md`](docs/phase-1.md), [`docs/phase-2.md`](docs/phase-2.md), [`docs/phase-3.md`](docs/phase-3.md), [`docs/phase-4.md`](docs/phase-4.md).
+**Durum:** Faz 5 tamamlandı — sunucu otoriteli pratik ve derecesiz çok oyunculu katmanların üzerine canlı ranked matchmaking, atomik Elo derecesi ve global/sezon liderlik tabloları eklendi. Karar kaydı: [`docs/phase-0.md`](docs/phase-0.md); faz notları: [`docs/phase-1.md`](docs/phase-1.md), [`docs/phase-2.md`](docs/phase-2.md), [`docs/phase-3.md`](docs/phase-3.md), [`docs/phase-4.md`](docs/phase-4.md), [`docs/phase-5.md`](docs/phase-5.md).
 
 ---
 
@@ -282,6 +282,8 @@ Aşağıdaki tablolar Django modelleri olarak tanımlanır. Tüm şema değişik
 - `rating_events` — maç, kullanıcı, önceki/sonraki puan, delta — **UNIQUE (match_id, user_id)**
 - `leaderboard_snapshots` — dönemsel sıralama anlık görüntüsü
 
+Ranked başlangıç puanı `1000`'dir. İlk 10 ranked maçta K=48, sonraki maçlarda K=32 kullanılır; bu değerler `backend/apps/ranking/engine.py` içindeki tekil rating servisinde tanımlıdır.
+
 **Kısıtlar ve indeksler (asgari)**
 
 - `rating_events (match_id, user_id)` UNIQUE
@@ -323,8 +325,10 @@ GET  /api/v1/rooms/{code}
 POST /api/v1/rooms/{code}/join
 POST /api/v1/rooms/{code}/start
 POST /api/v1/rooms/{code}/answers            # REST fallback; canlı istemci WebSocket kullanır
-POST /api/v1/matchmaking/queue            # ranked/derecesiz kuyruğa gir
+POST /api/v1/matchmaking/queue            # ranked kuyruğuna gir
 DELETE /api/v1/matchmaking/queue
+GET  /api/v1/matchmaking/queue/status
+POST /api/v1/matches/{id}/answers         # canlı ranked REST fallback
 POST /api/v1/duels                        # asenkron düello oluştur
 POST /api/v1/duels/{id}/play
 POST /api/v1/rooms                        # özel oda oluştur
@@ -386,7 +390,7 @@ Kurallar:
 | **2 — İçerik yönetimi** | Futbolcu, takım, kariyer, maç, skor ve ilk 11 verilerini PostgreSQL'de modellemek; API içe aktarma, editör onayı, çeviri ve yayın akışı. | Beş mod için onaylı sorular üretilebilir; doğrulanmamış veri oyuncuya gösterilmez. **Tamamlandı.** |
 | **3 — Oyun motoru ve pratik** | Sunucu tarafında soru seçimi, süre, cevap doğrulaması ve puanlama; Vue tarafında beş modun modern, futbol temalı ekranları. | Beş mod iki dilde tek başına baştan sona oynanır. **Tamamlandı.** |
 | **4 — Derecesiz çok oyunculu oyun** | Asenkron düello, davet, özel oda ve canlı derecesiz maçlar; bağlantı kopması ve süresi dolan oyunların ele alınması. | Düello farklı zamanlarda tamamlanır; 2–8 kişi özel odada oynar. **Tamamlandı.** |
-| **5 — Ranked ve liderlik tablosu** | Canlı eşleştirme, maç sonucu ve ortak derece; derece hareketlerinin **PostgreSQL işlemleriyle atomik** kaydı. | Yalnız uygun maç dereceyi değiştirir; tekrar gelen sonuç aynı maça ikinci kez puan yazmaz. |
+| **5 — Ranked ve liderlik tablosu** | Canlı eşleştirme, maç sonucu ve ortak derece; derece hareketlerinin **PostgreSQL işlemleriyle atomik** kaydı. | Yalnız uygun maç dereceyi değiştirir; tekrar gelen sonuç aynı maça ikinci kez puan yazmaz. **Tamamlandı.** |
 | **6 — Kalite ve kapalı beta** | Oyun, API ve iki tarayıcılı canlı maç testleri; erişilebilirlik, yük, içerik kalitesi ve **PostgreSQL yedekleme/geri yükleme** kontrolleri. | Kritik akışlar ve veri kurtarma doğrulanır; web sürümü kapalı beta için hazırdır. |
 | **7 — Mobil hazırlığı** | REST ve WebSocket sözleşmelerini sürümleyip mobil istemci için belgelemek. | Mobil uygulama aynı backend ve PostgreSQL verilerini API aracılığıyla kullanabilecek şekilde tasarım tamamlanır. |
 

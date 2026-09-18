@@ -149,6 +149,30 @@ h2 { margin-bottom: 0; font-size: clamp(1.9rem, 4vw, 3.8rem); letter-spacing: -0
 .participant-list { border-top: 1px solid var(--line); margin: 2rem 0; }
 .multiplayer-play { padding-top: 7vh; max-width: 850px; }
 
+.ranked-shell { min-height: calc(100vh - 72px); padding: 2rem 0 8vh; }
+.ranked-setup, .ranked-game { max-width: 1120px; margin: 0 auto; padding-top: 7vh; }
+.ranked-login-card { max-width: 520px; min-height: 300px; display: flex; flex-direction: column; align-items: flex-start; gap: 1rem; }
+.ranked-login-card h3, .ranked-queue-panel h3, .ranked-board h3 { margin-bottom: 0; font-size: 1.35rem; font-weight: 500; letter-spacing: -0.06em; }
+.ranked-overview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin-bottom: 1rem; }
+.ranked-stat-card { min-height: 150px; display: grid; align-content: space-between; gap: 0.5rem; }
+.ranked-stat-card span, .ranked-stat-card small { color: var(--muted); font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.ranked-stat-card strong { color: var(--signal); font-size: clamp(1.5rem, 4vw, 2.8rem); font-weight: 500; font-variant-numeric: tabular-nums; }
+.ranked-queue-panel { min-height: 170px; display: flex; justify-content: space-between; align-items: end; gap: 2rem; margin-bottom: 5rem; }
+.ranked-queue-action { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.ranked-queue-action strong { color: var(--signal); font-size: 0.75rem; font-weight: 500; }
+.ranked-board { border-top: 1px solid var(--line); padding-top: 2rem; }
+.ranked-board .section-heading { margin-bottom: 1rem; }
+.ranked-season { color: var(--signal); font-size: 0.75rem; }
+.ranked-table { border-top: 1px solid var(--line); }
+.ranked-table-row { display: grid; grid-template-columns: 0.35fr 2fr 0.75fr 0.65fr; gap: 1rem; align-items: center; border-bottom: 1px solid var(--line); padding: 0.9rem 0.75rem; color: var(--text); font-size: 0.74rem; }
+.ranked-table-row > :first-child, .ranked-table-row > :last-child { color: var(--muted); }
+.ranked-table-head { color: var(--muted); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.ranked-table-row strong { color: var(--signal); font-weight: 500; font-variant-numeric: tabular-nums; }
+.ranked-empty { color: var(--muted); padding: 1.2rem 0; font-size: 0.74rem; }
+.ranked-rail { grid-template-columns: 1.8fr 0.75fr 0.6fr 0.8fr 0.45fr; }
+.ranked-delta { color: var(--signal); font-size: 1.2rem; }
+.ranked-delta.negative { color: var(--danger); }
+
 @media (max-width: 900px) {
   .hero-grid { grid-template-columns: 1fr; padding-top: 8vh; }
   .match-panel { max-width: 600px; }
@@ -157,6 +181,9 @@ h2 { margin-bottom: 0; font-size: clamp(1.9rem, 4vw, 3.8rem); letter-spacing: -0
   .practice-mode-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .multiplayer-grid { grid-template-columns: 1fr; }
   .multiplayer-rail { grid-template-columns: 1fr 1fr; }
+  .ranked-overview { grid-template-columns: 1fr; }
+  .ranked-queue-panel { align-items: flex-start; flex-direction: column; }
+  .ranked-rail { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 600px) {
   .app-shell { padding: 0 1rem; }
@@ -176,4 +203,5 @@ h2 { margin-bottom: 0; font-size: clamp(1.9rem, 4vw, 3.8rem); letter-spacing: -0
   .hint-row, .score-inputs { display: grid; align-items: start; }
   .score-separator { display: none; }
   .multiplayer-rail { grid-template-columns: 1fr; gap: 0.5rem; }
+  .ranked-table-row { grid-template-columns: 0.35fr 1.5fr 0.7fr 0.55fr; gap: 0.5rem; font-size: 0.65rem; }
 }

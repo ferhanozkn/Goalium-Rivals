@@ -6,14 +6,14 @@ from datetime import timedelta
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import F
+from django.db.models import F, Sum
 from django.utils import timezone
 
 from apps.quiz.engine.constants import MODE_RULES, mode_duration
 from apps.quiz.engine.normalization import normalize_answer
 from apps.quiz.engine.practice import _evaluate_round, round_public_state
 from apps.quiz.engine.selection import create_round
-from apps.quiz.models import GameSession, Match, MatchParticipant, ParticipantRoundState, Round
+from apps.quiz.models import Answer, GameSession, Match, MatchParticipant, ParticipantRoundState, Round
 
 
 MULTIPLAYER_MODES = tuple(MODE_RULES.keys())
@@ -330,6 +330,15 @@ def _finish_match(match, now):
     score_values = [participant.score for participant in participants]
     high_score = max(score_values) if score_values else 0
     winners = [participant for participant in participants if participant.score == high_score]
+    if len(winners) > 1 and not (match.settings or {}).get("sudden_death"):
+        response_totals = {
+            participant.id: Answer.objects.filter(participant=participant).aggregate(total=Sum("response_ms"))["total"] or 0
+            for participant in winners
+        }
+        fastest = min(response_totals.values())
+        fastest_winners = [participant for participant in winners if response_totals[participant.id] == fastest]
+        if len(fastest_winners) == 1:
+            winners = fastest_winners
     match.status = "finished"
     match.finished_at = now
     match.result = {
@@ -341,6 +350,42 @@ def _finish_match(match, now):
     match.game_session.finished_at = now
     match.game_session.save(update_fields=["status", "finished_at"])
     match.save(update_fields=["status", "finished_at", "result"])
+    from apps.ranking.engine import apply_rating_for_match
+
+    apply_rating_for_match(match)
+
+
+def _needs_sudden_death(match):
+    if match.match_type != "live_1v1" or (match.settings or {}).get("sudden_death"):
+        return False
+    participants = list(match.participants.order_by("joined_at"))
+    if len(participants) != 2 or participants[0].score != participants[1].score:
+        return False
+    response_totals = {
+        participant.id: Answer.objects.filter(participant=participant).aggregate(total=Sum("response_ms"))["total"] or 0
+        for participant in participants
+    }
+    return response_totals[participants[0].id] == response_totals[participants[1].id]
+
+
+def _start_sudden_death(match, now):
+    mode = match.rounds.order_by("order").values_list("mode", flat=True).first() or "timed_trivia"
+    settings = {**(match.settings or {}), "sudden_death": True}
+    match.settings = settings
+    match.save(update_fields=["settings"])
+    round_instance = create_round(
+        match.game_session,
+        match,
+        mode,
+        match.rounds.count(),
+        deadline=now + timedelta(seconds=_duration_seconds(mode, float(settings.get("duration_multiplier", DEFAULT_DURATION_MULTIPLIER)))),
+        status="active",
+        allow_reuse=True,
+        update_session_deadline=False,
+    )
+    for participant in match.participants.all():
+        _activate_round_for_participant(participant, round_instance, now)
+    return round_instance
 
 
 def _all_states_finished(match, round_instance):
@@ -357,6 +402,8 @@ def _advance_live_match(match, round_instance, now):
     round_instance.save(update_fields=["status"])
     next_round = match.rounds.filter(order__gt=round_instance.order).order_by("order").first()
     if next_round is None:
+        if _needs_sudden_death(match):
+            return _start_sudden_death(match, now)
         _finish_match(match, now)
         return None
     next_round.status = "active"

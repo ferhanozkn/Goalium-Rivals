@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "apps.content",
     "apps.imports",
     "apps.quiz",
+    "apps.ranking",
     "apps.realtime",
 ]
 

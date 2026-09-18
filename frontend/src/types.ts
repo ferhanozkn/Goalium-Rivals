@@ -110,3 +110,43 @@ export interface AuthResponse {
   user: AuthUser;
   tokens: { access: string; refresh: string };
 }
+
+export interface MatchmakingResponse {
+  status: "idle" | "queued" | "matched";
+  queue: "ranked";
+  position: number | null;
+  match?: Match;
+  participant_id?: string;
+  round?: PracticeRound | null;
+}
+
+export interface RatingEntry {
+  rank: number;
+  user_id: string;
+  display_name: string;
+  rating: number;
+  matches_played: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  in_placement: boolean;
+}
+
+export interface LeaderboardResponse {
+  period: "global" | "season";
+  season: string | null;
+  entries: RatingEntry[];
+}
+
+export interface RatingStats {
+  user_id: string;
+  display_name: string;
+  rating: number;
+  matches_played: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  in_placement: boolean;
+  global_rank: number | null;
+  season_rank: number | null;
+}

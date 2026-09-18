@@ -348,3 +348,24 @@ def match_join(request, match_id):
         participant = join_live_match(match, request_actor(request))
     match.refresh_from_db()
     return Response({"participant_id": str(participant.id), "match": MatchSerializer(match).data})
+
+
+@extend_schema(request=MultiplayerAnswerSerializer, responses={200: MultiplayerAnswerResponseSerializer}, tags=["matchmaking"])
+@api_view(["POST"])
+@authentication_classes([JWTAuthentication])
+@permission_classes([IsAuthenticated])
+def match_answers(request, match_id):
+    user = _user_only(request)
+    serializer = MultiplayerAnswerSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    match = Match.objects.filter(id=match_id, match_type="live_1v1").first()
+    if match is None:
+        return Response({"detail": "Maç bulunamadı."}, status=status.HTTP_404_NOT_FOUND)
+    participant = participant_for_match(match, user=user)
+    if participant is None:
+        return Response({"detail": "Bu maça erişim izniniz yok."}, status=status.HTTP_403_FORBIDDEN)
+    try:
+        result = submit_multiplayer_answer(match_id, participant.id, **serializer.validated_data)
+    except (ValidationError, MultiplayerConflict) as exc:
+        return _multiplayer_error(exc)
+    return Response(result)

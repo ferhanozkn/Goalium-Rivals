@@ -11,6 +11,9 @@ import type {
   PracticeSessionResponse,
   MultiplayerAnswerResponse,
   MultiplayerResponse,
+  LeaderboardResponse,
+  MatchmakingResponse,
+  RatingStats,
 } from "../types";
 
 const api = axios.create({ baseURL: "/api/v1" });
@@ -107,6 +110,35 @@ export async function fetchDuel(duelId: string): Promise<MultiplayerResponse> {
 
 export async function submitDuelAnswer(duelId: string, roundId: string, answer: Record<string, unknown>): Promise<MultiplayerAnswerResponse> {
   const response = await api.post<MultiplayerAnswerResponse>(`/duels/${duelId}/play`, { round_id: roundId, answer });
+  return response.data;
+}
+
+export async function queueMatchmaking(language: Language): Promise<MatchmakingResponse> {
+  const response = await api.post<MatchmakingResponse>("/matchmaking/queue", { language });
+  return response.data;
+}
+
+export async function matchmakingStatus(language: Language): Promise<MatchmakingResponse> {
+  const response = await api.get<MatchmakingResponse>("/matchmaking/queue/status", { params: { language } });
+  return response.data;
+}
+
+export async function leaveMatchmaking(language: Language): Promise<void> {
+  await api.delete("/matchmaking/queue", { params: { language } });
+}
+
+export async function submitLiveAnswer(matchId: string, roundId: string, answer: Record<string, unknown>): Promise<MultiplayerAnswerResponse> {
+  const response = await api.post<MultiplayerAnswerResponse>(`/matches/${matchId}/answers`, { round_id: roundId, answer });
+  return response.data;
+}
+
+export async function fetchLeaderboard(period: "global" | "season" = "global"): Promise<LeaderboardResponse> {
+  const response = await api.get<LeaderboardResponse>("/leaderboard", { params: { period } });
+  return response.data;
+}
+
+export async function fetchRatingStats(): Promise<RatingStats> {
+  const response = await api.get<RatingStats>("/me/stats");
   return response.data;
 }
 

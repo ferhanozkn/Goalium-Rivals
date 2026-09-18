@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 
 import PracticeView from "./components/PracticeView.vue";
 import MultiplayerView from "./components/MultiplayerView.vue";
+import RankedView from "./components/RankedView.vue";
 import { createLiveMatch, fetchModes } from "./lib/api";
 import { useSessionStore } from "./stores/session";
 import type { Language, Match, ModeDefinition } from "./types";
@@ -15,7 +16,7 @@ const match = ref<Match | null>(null);
 const loading = ref(true);
 const error = ref("");
 const notice = ref("");
-const view = ref<"home" | "practice" | "multiplayer">("home");
+const view = ref<"home" | "practice" | "multiplayer" | "ranked">("home");
 const socketStatus = ref<"disconnected" | "connecting" | "connected">("disconnected");
 let socket: WebSocket | null = null;
 
@@ -44,6 +45,17 @@ function openMultiplayer() {
 }
 
 function closeMultiplayer() {
+  view.value = "home";
+}
+
+function openRanked() {
+  error.value = "";
+  notice.value = "";
+  view.value = "ranked";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function closeRanked() {
   view.value = "home";
 }
 
@@ -120,6 +132,7 @@ onBeforeUnmount(() => socket?.close());
         <a href="#live">{{ t("navigation.live") }}</a>
         <a href="#practice" @click.prevent="openPractice">{{ t("navigation.practice") }}</a>
         <a href="#multiplayer" @click.prevent="openMultiplayer">{{ t("multiplayer.eyebrow") }}</a>
+        <a href="#ranked" @click.prevent="openRanked">{{ t("ranked.eyebrow") }}</a>
         <a href="#session">{{ t("navigation.account") }}</a>
       </nav>
       <div class="language-switcher" :aria-label="t('common.language')">
@@ -130,6 +143,7 @@ onBeforeUnmount(() => socket?.close());
 
     <PracticeView v-if="view === 'practice'" :language="currentLanguage" :modes="modes" @back="closePractice" />
     <MultiplayerView v-else-if="view === 'multiplayer'" :language="currentLanguage" :modes="modes" @back="closeMultiplayer" />
+    <RankedView v-else-if="view === 'ranked'" :language="currentLanguage" :modes="modes" @back="closeRanked" />
 
     <template v-else>
       <section class="hero-grid">
@@ -141,6 +155,7 @@ onBeforeUnmount(() => socket?.close());
           <button class="button button-primary" type="button" :disabled="session.loading" @click="startMatch">{{ t("home.createMatch") }}</button>
           <button class="button button-quiet" type="button" :disabled="session.loading" @click="openPractice">{{ t("home.practice") }}</button>
           <button class="button button-quiet" type="button" :disabled="session.loading" @click="openMultiplayer">{{ t("home.multiplayer") }}</button>
+          <button class="button button-quiet" type="button" :disabled="session.loading" @click="openRanked">{{ t("home.ranked") }}</button>
           <button class="button button-quiet" type="button" :disabled="session.loading" @click="startGuest">{{ t("home.createGuest") }}</button>
         </div>
         <p v-if="notice" class="notice" role="status">{{ notice }}</p>
@@ -195,7 +210,7 @@ onBeforeUnmount(() => socket?.close());
 
       <footer id="session" class="footer-grid">
       <span>Goalium Rivals</span>
-        <span>{{ t("common.phaseThree") }}</span>
+        <span>{{ t("common.phaseFive") }}</span>
       </footer>
     </template>
   </main>

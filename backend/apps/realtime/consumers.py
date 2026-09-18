@@ -131,6 +131,7 @@ class MatchConsumer(AsyncJsonWebsocketConsumer):
             "match_type": match.match_type,
             "is_mixed": match.is_mixed,
             "language": match.language,
+            "result": match.result,
             "participants": [
                 {
                     "id": str(participant.id),
