@@ -124,7 +124,7 @@ class QuestionPayloadEditorSerializer(serializers.ModelSerializer):
 class QuestionTranslationEditorSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuestionTranslation
-        fields = ["language", "prompt", "choices", "hints"]
+        fields = ["language", "prompt", "choices", "hints", "public_data"]
 
 
 class PublicTranslationSerializer(serializers.Serializer):
@@ -132,6 +132,7 @@ class PublicTranslationSerializer(serializers.Serializer):
     prompt = serializers.CharField()
     choices = serializers.ListField()
     hints = serializers.ListField()
+    data = serializers.JSONField()
 
 
 class QuestionEditorSerializer(serializers.ModelSerializer):
@@ -144,6 +145,7 @@ class QuestionEditorSerializer(serializers.ModelSerializer):
         model = Question
         fields = [
             "id",
+            "seed_key",
             "mode",
             "difficulty",
             "status",
@@ -160,6 +162,7 @@ class QuestionEditorSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             "id",
+            "seed_key",
             "status",
             "created_by",
             "approved_by",
@@ -209,6 +212,7 @@ class QuestionPublicSerializer(serializers.ModelSerializer):
             "prompt": translation.prompt,
             "choices": translation.choices,
             "hints": translation.hints,
+            "data": translation.public_data,
         }
 
     @extend_schema_field(serializers.JSONField)

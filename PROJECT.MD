@@ -3,7 +3,7 @@
 **Çalışma adı:** Futbol Bilgi Oyunu (web + sonraki aşamada mobil)
 **Doküman dili:** Türkçe
 **Hedef okuyucu:** Codex, Claude Code ve insan geliştiriciler
-**Durum:** Faz 2 tamamlandı — temel altyapıya içerik modelleri, provider-bağımsız import pipeline'ı, lisans kapısı ve editör yayın akışı eklendi. Karar kaydı: [`docs/phase-0.md`](docs/phase-0.md); faz notları: [`docs/phase-1.md`](docs/phase-1.md), [`docs/phase-2.md`](docs/phase-2.md).
+**Durum:** Faz 3 tamamlandı — içerik modellerinin üzerine sunucu otoriteli oyun motoru, beş modlu pratik API'si ve iki dilli pratik arayüzü eklendi. Karar kaydı: [`docs/phase-0.md`](docs/phase-0.md); faz notları: [`docs/phase-1.md`](docs/phase-1.md), [`docs/phase-2.md`](docs/phase-2.md), [`docs/phase-3.md`](docs/phase-3.md).
 
 ---
 
@@ -262,14 +262,14 @@ Aşağıdaki tablolar Django modelleri olarak tanımlanır. Tüm şema değişik
 
 - `questions` — mod, zorluk, durum, kaynak referansı, oluşturma/onay bilgisi
 - `question_payloads` — moda özgü yapılandırılmış veri (JSONB) + doğru cevap
-- `question_translations` — soru, dil, metin, şıklar, ipuçları
+- `question_translations` — soru, dil, metin, şıklar, ipuçları, istemciye açık moda özgü veri
 - `answer_aliases` — varlık (oyuncu/takım), dil, kabul edilen alternatif yazımlar
 - `import_jobs`, `import_records` — sağlayıcıdan çekilen ham veri, eşleme durumu, çakışma kayıtları
 
 **Oyun**
 
-- `game_sessions` — pratik/canlı/asenkron/oda, mod seti, dil, başlangıç, durum
-- `matches` — tip (`practice|live_1v1|async_duel|room`), `origin` (`matchmaking|invite|room`), karışık mı, ranked uygun mu, durum, sonuç
+- `game_sessions` — pratik/canlı/asenkron/oda, mod seti, dil, başlangıç, deadline, durum
+- `matches` — tip (`practice|live_1v1|async_duel|room`), `origin` (`matchmaking|invite|room|practice`), karışık mı, ranked uygun mu, durum, sonuç
 - `match_participants` — maç, kullanıcı veya misafir oturumu, skor, bağlantı durumu
 - `rounds` — maç, sıra no, soru, `deadline`, durum
 - `answers` — tur, katılımcı, ham cevap, normalize cevap, sonuç (`correct|wrong|timeout|skipped`), süre (ms), puan
@@ -311,6 +311,7 @@ POST /api/v1/content/editor/questions
 POST /api/v1/content/editor/questions/{id}/transition
 POST /api/v1/content/imports
 POST /api/v1/practice/sessions            # pratik oyun başlat
+GET  /api/v1/practice/sessions/{id}       # aktif pratik turunu getir
 POST /api/v1/practice/sessions/{id}/answers
 POST /api/v1/matchmaking/queue            # ranked/derecesiz kuyruğa gir
 DELETE /api/v1/matchmaking/queue
@@ -373,7 +374,7 @@ Kurallar:
 | **0 — Kurallar ve veri doğrulaması** | Beş modun cevap, süre, hata ve puan kurallarını kesinleştirmek; örnek içerik ve veri kullanım haklarını incelemek. | Her mod için doğrulanmış örnek soru ve uygulanabilir oyun kuralları vardır. |
 | **1 — Temel altyapı** | Django backend, **PostgreSQL şeması ve migration'ları**, REST API, WebSocket altyapısı, Vue uygulaması, hesap ve misafir oturumları. | Web istemcisi API'ye bağlanır; kalıcı kayıtlar PostgreSQL'de tutulur; iki istemci canlı oturuma bağlanır. **Tamamlandı.** |
 | **2 — İçerik yönetimi** | Futbolcu, takım, kariyer, maç, skor ve ilk 11 verilerini PostgreSQL'de modellemek; API içe aktarma, editör onayı, çeviri ve yayın akışı. | Beş mod için onaylı sorular üretilebilir; doğrulanmamış veri oyuncuya gösterilmez. **Tamamlandı.** |
-| **3 — Oyun motoru ve pratik** | Sunucu tarafında soru seçimi, süre, cevap doğrulaması ve puanlama; Vue tarafında beş modun modern, futbol temalı ekranları. | Beş mod iki dilde tek başına baştan sona oynanır. |
+| **3 — Oyun motoru ve pratik** | Sunucu tarafında soru seçimi, süre, cevap doğrulaması ve puanlama; Vue tarafında beş modun modern, futbol temalı ekranları. | Beş mod iki dilde tek başına baştan sona oynanır. **Tamamlandı.** |
 | **4 — Derecesiz çok oyunculu oyun** | Asenkron düello, davet, özel oda ve canlı derecesiz maçlar; bağlantı kopması ve süresi dolan oyunların ele alınması. | Düello farklı zamanlarda tamamlanır; 2–8 kişi özel odada oynar. |
 | **5 — Ranked ve liderlik tablosu** | Canlı eşleştirme, maç sonucu ve ortak derece; derece hareketlerinin **PostgreSQL işlemleriyle atomik** kaydı. | Yalnız uygun maç dereceyi değiştirir; tekrar gelen sonuç aynı maça ikinci kez puan yazmaz. |
 | **6 — Kalite ve kapalı beta** | Oyun, API ve iki tarayıcılı canlı maç testleri; erişilebilirlik, yük, içerik kalitesi ve **PostgreSQL yedekleme/geri yükleme** kontrolleri. | Kritik akışlar ve veri kurtarma doğrulanır; web sürümü kapalı beta için hazırdır. |
@@ -392,6 +393,13 @@ Her madde otomatik testle doğrulanır.
 - Süre aşımı `timeout` olarak kaydedilir; `wrong` ile karıştırılmaz.
 - Süre sunucu saatine göre ölçülür; istemciden gelen süre bilgisi sonucu değiştirmez.
 - `round.start` yükünde doğru cevap bulunmaz (yük şeması testi).
+
+### 13.7 Faz 3 pratik akışı
+
+- `POST /practice/sessions` yalnız `published` ve istenen dilde çevirisi bulunan sorulardan ilk turu üretir.
+- Cevaplar `POST /practice/sessions/{id}/answers` ile sunucuya gönderilir; `round.private_state` ve `question_payload.answer_data` istemciye serialize edilmez.
+- Pratikte misafir ve hesaplı kullanıcılar oynayabilir; pratik maçları ranked puanını değiştirmez.
+- Vue ekranı gerçek `deadline`, `round`, `result` ve `score` alanlarını gösterir; istemci süre veya puan hesaplamaz.
 
 ### 13.2 İki dilde cevap eşleştirmesi
 

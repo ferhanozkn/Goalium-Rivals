@@ -1,4 +1,5 @@
 export type Language = "tr" | "en";
+export type PracticeMode = "hangman" | "career_path" | "timed_trivia" | "historical_score" | "missing_lineup";
 
 export interface ModeDefinition {
   id: string;
@@ -34,4 +35,42 @@ export interface Match {
   created_at: string;
   started_at: string | null;
   finished_at: string | null;
+}
+
+export interface PracticeRound {
+  id: string;
+  order: number;
+  mode: PracticeMode;
+  status: "pending" | "active" | "finished" | "timeout";
+  deadline: string;
+  server_now: string;
+  prompt: string;
+  choices: string[];
+  hints: string[];
+  data: Record<string, unknown>;
+}
+
+export interface PracticeSessionResponse {
+  session: {
+    id: string;
+    kind: string;
+    modes: PracticeMode[];
+    language: Language;
+    status: string;
+    started_at: string | null;
+    finished_at: string | null;
+    deadline: string | null;
+    created_at: string;
+  };
+  actor_type: "guest" | "user";
+  participant_id: string;
+  round: PracticeRound;
+}
+
+export interface PracticeAnswerResponse {
+  round: PracticeRound;
+  result: "correct" | "wrong" | "timeout" | "skipped" | "active";
+  points: number;
+  score: number;
+  next_round: PracticeRound | null;
 }

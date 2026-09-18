@@ -24,6 +24,7 @@ class GameSession(models.Model):
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="waiting")
     started_at = models.DateTimeField(null=True, blank=True)
     finished_at = models.DateTimeField(null=True, blank=True)
+    deadline = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -32,7 +33,7 @@ class GameSession(models.Model):
 
 class Match(models.Model):
     TYPE_CHOICES = (("live_1v1", "Live 1v1"), ("practice", "Practice"), ("async_duel", "Async duel"), ("room", "Room"))
-    ORIGIN_CHOICES = (("matchmaking", "Matchmaking"), ("invite", "Invite"), ("room", "Room"))
+    ORIGIN_CHOICES = (("matchmaking", "Matchmaking"), ("invite", "Invite"), ("room", "Room"), ("practice", "Practice"))
     STATUS_CHOICES = (("waiting", "Waiting"), ("live", "Live"), ("finished", "Finished"), ("forfeit", "Forfeit"))
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -87,9 +88,11 @@ class Round(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     match = models.ForeignKey(Match, on_delete=models.CASCADE, related_name="rounds")
+    question = models.ForeignKey("content.Question", null=True, blank=True, on_delete=models.PROTECT, related_name="rounds")
     order = models.PositiveSmallIntegerField()
     mode = models.CharField(max_length=24, choices=MODE_CHOICES)
     payload = models.JSONField(default=dict)
+    private_state = models.JSONField(default=dict)
     deadline = models.DateTimeField()
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="pending")
     created_at = models.DateTimeField(auto_now_add=True)

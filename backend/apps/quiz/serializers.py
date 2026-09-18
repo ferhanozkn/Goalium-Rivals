@@ -6,7 +6,7 @@ from apps.quiz.models import GameSession, Match, MatchParticipant
 class GameSessionSerializer(serializers.ModelSerializer):
     class Meta:
         model = GameSession
-        fields = ["id", "kind", "modes", "language", "status", "started_at", "finished_at", "created_at"]
+        fields = ["id", "kind", "modes", "language", "status", "started_at", "finished_at", "deadline", "created_at"]
         read_only_fields = fields
 
 
@@ -62,6 +62,27 @@ class ModeDefinitionSerializer(serializers.Serializer):
 class PracticeSessionResponseSerializer(serializers.Serializer):
     session = GameSessionSerializer()
     actor_type = serializers.ChoiceField(choices=["guest", "user"])
+    participant_id = serializers.UUIDField()
+    round = serializers.JSONField()
+
+
+class PracticeSessionDetailSerializer(serializers.Serializer):
+    session = GameSessionSerializer()
+    participant_id = serializers.UUIDField()
+    round = serializers.JSONField(allow_null=True)
+
+
+class PracticeSessionAnswerSerializer(serializers.Serializer):
+    round_id = serializers.UUIDField()
+    answer = serializers.JSONField()
+
+
+class PracticeAnswerResponseSerializer(serializers.Serializer):
+    round = serializers.JSONField()
+    result = serializers.ChoiceField(choices=["correct", "wrong", "timeout", "skipped", "active"])
+    points = serializers.IntegerField()
+    score = serializers.IntegerField()
+    next_round = serializers.JSONField(allow_null=True)
 
 
 class MatchJoinResponseSerializer(serializers.Serializer):

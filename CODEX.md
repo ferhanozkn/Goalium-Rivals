@@ -35,4 +35,5 @@ Bu dosya, projede çalışan kod ajanları için operasyonel başlangıç notudu
 - Faz 0: tamamlandı.
 - Faz 1: tamamlandı. Teslim kapsamı ve yerel doğrulama sonuçları [`docs/phase-1.md`](docs/phase-1.md) içindedir.
 - Faz 2: tamamlandı. Teslim kapsamı ve doğrulama sonuçları [`docs/phase-2.md`](docs/phase-2.md) içindedir.
-- Sonraki faz: kullanıcı açıkça istemeden Faz 3 kapsamına geçilmez.
+- Faz 3: tamamlandı. Teslim kapsamı ve doğrulama sonuçları [`docs/phase-3.md`](docs/phase-3.md) içindedir.
+- Sonraki faz: kullanıcı açıkça istemeden Faz 4 kapsamına geçilmez.

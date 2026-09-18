@@ -427,6 +427,62 @@ paths:
               schema:
                 $ref: '#/components/schemas/PracticeSessionResponse'
           description: ''
+  /api/v1/practice/sessions/{session_id}:
+    get:
+      operationId: practice_sessions_retrieve
+      parameters:
+      - in: path
+        name: session_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - quiz
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PracticeSessionDetail'
+          description: ''
+  /api/v1/practice/sessions/{session_id}/answers:
+    post:
+      operationId: practice_sessions_answers_create
+      parameters:
+      - in: path
+        name: session_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - quiz
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PracticeSessionAnswer'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PracticeSessionAnswer'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PracticeSessionAnswer'
+        required: true
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PracticeAnswerResponse'
+          description: ''
 components:
   schemas:
     ActorTypeEnum:
@@ -488,12 +544,18 @@ components:
           format: date-time
           readOnly: true
           nullable: true
+        deadline:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
         created_at:
           type: string
           format: date-time
           readOnly: true
       required:
       - created_at
+      - deadline
       - finished_at
       - id
       - kind
@@ -829,11 +891,13 @@ components:
       - matchmaking
       - invite
       - room
+      - practice
       type: string
       description: |-
         * `matchmaking` - Matchmaking
         * `invite` - Invite
         * `room` - Room
+        * `practice` - Practice
     MatchParticipant:
       type: object
       properties:
@@ -914,6 +978,34 @@ components:
         * `timed_trivia` - Timed trivia
         * `historical_score` - Historical score
         * `missing_lineup` - Missing lineup
+    PracticeAnswerResponse:
+      type: object
+      properties:
+        round: {}
+        result:
+          $ref: '#/components/schemas/ResultEnum'
+        points:
+          type: integer
+        score:
+          type: integer
+        next_round:
+          nullable: true
+      required:
+      - next_round
+      - points
+      - result
+      - round
+      - score
+    PracticeSessionAnswer:
+      type: object
+      properties:
+        round_id:
+          type: string
+          format: uuid
+        answer: {}
+      required:
+      - answer
+      - round_id
     PracticeSessionCreate:
       type: object
       properties:
@@ -928,6 +1020,20 @@ components:
             maxLength: 24
       required:
       - modes
+    PracticeSessionDetail:
+      type: object
+      properties:
+        session:
+          $ref: '#/components/schemas/GameSession'
+        participant_id:
+          type: string
+          format: uuid
+        round:
+          nullable: true
+      required:
+      - participant_id
+      - round
+      - session
     PracticeSessionResponse:
       type: object
       properties:
@@ -935,8 +1041,14 @@ components:
           $ref: '#/components/schemas/GameSession'
         actor_type:
           $ref: '#/components/schemas/ActorTypeEnum'
+        participant_id:
+          type: string
+          format: uuid
+        round: {}
       required:
       - actor_type
+      - participant_id
+      - round
       - session
     PreferredLanguageEnum:
       enum:
@@ -959,8 +1071,10 @@ components:
         hints:
           type: array
           items: {}
+        data: {}
       required:
       - choices
+      - data
       - hints
       - language
       - prompt
@@ -971,6 +1085,10 @@ components:
           type: string
           format: uuid
           readOnly: true
+        seed_key:
+          type: string
+          readOnly: true
+          nullable: true
         mode:
           $ref: '#/components/schemas/ModeEnum'
         difficulty:
@@ -1034,6 +1152,7 @@ components:
       - id
       - mode
       - published_at
+      - seed_key
       - source_references
       - status
       - updated_at
@@ -1092,6 +1211,7 @@ components:
           type: string
         choices: {}
         hints: {}
+        public_data: {}
       required:
       - language
       - prompt
@@ -1115,6 +1235,20 @@ components:
       - display_name
       - email
       - password
+    ResultEnum:
+      enum:
+      - correct
+      - wrong
+      - timeout
+      - skipped
+      - active
+      type: string
+      description: |-
+        * `correct` - correct
+        * `wrong` - wrong
+        * `timeout` - timeout
+        * `skipped` - skipped
+        * `active` - active
     SourceReference:
       type: object
       properties:

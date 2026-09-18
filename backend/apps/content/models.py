@@ -180,6 +180,7 @@ class LineupSlot(TimestampedModel):
 
 class Question(TimestampedModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    seed_key = models.CharField(max_length=120, unique=True, null=True, blank=True)
     mode = models.CharField(max_length=24, choices=MODE_CHOICES)
     difficulty = models.CharField(max_length=8, choices=DIFFICULTY_CHOICES, default="medium")
     status = models.CharField(max_length=12, choices=QUESTION_STATUS_CHOICES, default="draft")
@@ -228,6 +229,7 @@ class QuestionTranslation(TimestampedModel):
     prompt = models.TextField()
     choices = models.JSONField(default=list, blank=True)
     hints = models.JSONField(default=list, blank=True)
+    public_data = models.JSONField(default=dict, blank=True)
 
     class Meta:
         ordering = ["language"]

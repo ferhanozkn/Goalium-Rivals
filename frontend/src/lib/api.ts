@@ -1,6 +1,14 @@
 import axios from "axios";
 
-import type { GuestSession, Language, Match, ModeDefinition } from "../types";
+import type {
+  GuestSession,
+  Language,
+  Match,
+  ModeDefinition,
+  PracticeAnswerResponse,
+  PracticeMode,
+  PracticeSessionResponse,
+} from "../types";
 
 const api = axios.create({ baseURL: "/api/v1" });
 
@@ -34,5 +42,22 @@ export async function createLiveMatch(language: Language): Promise<Match> {
 
 export async function fetchMatch(matchId: string): Promise<Match> {
   const response = await api.get<Match>(`/matches/${matchId}`);
+  return response.data;
+}
+
+export async function createPracticeSession(language: Language, modes: PracticeMode[]): Promise<PracticeSessionResponse> {
+  const response = await api.post<PracticeSessionResponse>("/practice/sessions", { language, modes });
+  return response.data;
+}
+
+export async function submitPracticeAnswer(
+  sessionId: string,
+  roundId: string,
+  answer: Record<string, unknown>,
+): Promise<PracticeAnswerResponse> {
+  const response = await api.post<PracticeAnswerResponse>(`/practice/sessions/${sessionId}/answers`, {
+    round_id: roundId,
+    answer,
+  });
   return response.data;
 }

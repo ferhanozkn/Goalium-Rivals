@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 
+import PracticeView from "./components/PracticeView.vue";
 import { createLiveMatch, fetchModes } from "./lib/api";
 import { useSessionStore } from "./stores/session";
 import type { Language, Match, ModeDefinition } from "./types";
@@ -13,6 +14,7 @@ const match = ref<Match | null>(null);
 const loading = ref(true);
 const error = ref("");
 const notice = ref("");
+const view = ref<"home" | "practice">("home");
 const socketStatus = ref<"disconnected" | "connecting" | "connected">("disconnected");
 let socket: WebSocket | null = null;
 
@@ -20,6 +22,17 @@ const currentLanguage = computed(() => locale.value as Language);
 
 function toggleLanguage(language: Language) {
   locale.value = language;
+}
+
+function openPractice() {
+  error.value = "";
+  notice.value = "";
+  view.value = "practice";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function closePractice() {
+  view.value = "home";
 }
 
 function modeTitle(mode: ModeDefinition) {
@@ -93,6 +106,7 @@ onBeforeUnmount(() => socket?.close());
       <nav class="topnav" :aria-label="t('navigation.primary')">
         <a href="#modes">{{ t("navigation.modes") }}</a>
         <a href="#live">{{ t("navigation.live") }}</a>
+        <a href="#practice" @click.prevent="openPractice">{{ t("navigation.practice") }}</a>
         <a href="#session">{{ t("navigation.account") }}</a>
       </nav>
       <div class="language-switcher" :aria-label="t('common.language')">
@@ -101,13 +115,17 @@ onBeforeUnmount(() => socket?.close());
       </div>
     </header>
 
-    <section class="hero-grid">
+    <PracticeView v-if="view === 'practice'" :language="currentLanguage" :modes="modes" @back="closePractice" />
+
+    <template v-else>
+      <section class="hero-grid">
       <div class="hero-copy">
         <p class="eyebrow">{{ t("home.eyebrow") }}</p>
         <h1>{{ t("home.title") }}</h1>
         <p class="hero-description">{{ t("home.description") }}</p>
         <div class="hero-actions">
           <button class="button button-primary" type="button" :disabled="session.loading" @click="startMatch">{{ t("home.createMatch") }}</button>
+          <button class="button button-quiet" type="button" :disabled="session.loading" @click="openPractice">{{ t("home.practice") }}</button>
           <button class="button button-quiet" type="button" :disabled="session.loading" @click="startGuest">{{ t("home.createGuest") }}</button>
         </div>
         <p v-if="notice" class="notice" role="status">{{ notice }}</p>
@@ -137,9 +155,9 @@ onBeforeUnmount(() => socket?.close());
           <span>{{ t("home.noMatchDetail") }}</span>
         </div>
       </aside>
-    </section>
+      </section>
 
-    <section id="modes" class="modes-section">
+      <section id="modes" class="modes-section">
       <div class="section-heading">
         <div>
           <p class="eyebrow">01 / {{ t("navigation.modes") }}</p>
@@ -158,11 +176,12 @@ onBeforeUnmount(() => socket?.close());
           <div class="mode-duration">{{ mode.duration_seconds }} {{ t("common.seconds") }}</div>
         </article>
       </div>
-    </section>
+      </section>
 
-    <footer id="session" class="footer-grid">
+      <footer id="session" class="footer-grid">
       <span>Goalium Rivals</span>
-      <span>{{ t("common.phaseOne") }}</span>
-    </footer>
+        <span>{{ t("common.phaseThree") }}</span>
+      </footer>
+    </template>
   </main>
 </template>
