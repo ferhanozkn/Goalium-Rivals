@@ -3,7 +3,7 @@
 **Çalışma adı:** Futbol Bilgi Oyunu (web + sonraki aşamada mobil)
 **Doküman dili:** Türkçe
 **Hedef okuyucu:** Codex, Claude Code ve insan geliştiriciler
-**Durum:** Faz 1 tamamlandı — temel Django/Vue altyapısı, PostgreSQL kalıcılığı, REST/WebSocket sözleşmesi ve misafir canlı oturum akışı hazır. Karar kaydı: [`docs/phase-0.md`](docs/phase-0.md); teslim notları: [`docs/phase-1.md`](docs/phase-1.md).
+**Durum:** Faz 2 tamamlandı — temel altyapıya içerik modelleri, provider-bağımsız import pipeline'ı, lisans kapısı ve editör yayın akışı eklendi. Karar kaydı: [`docs/phase-0.md`](docs/phase-0.md); faz notları: [`docs/phase-1.md`](docs/phase-1.md), [`docs/phase-2.md`](docs/phase-2.md).
 
 ---
 
@@ -305,6 +305,11 @@ POST /api/v1/auth/register
 POST /api/v1/auth/login
 POST /api/v1/guest/session
 GET  /api/v1/modes
+GET  /api/v1/content/questions?language=tr
+GET  /api/v1/content/questions/{id}?language=en
+POST /api/v1/content/editor/questions
+POST /api/v1/content/editor/questions/{id}/transition
+POST /api/v1/content/imports
 POST /api/v1/practice/sessions            # pratik oyun başlat
 POST /api/v1/practice/sessions/{id}/answers
 POST /api/v1/matchmaking/queue            # ranked/derecesiz kuyruğa gir
@@ -367,7 +372,7 @@ Kurallar:
 |---|---|---|
 | **0 — Kurallar ve veri doğrulaması** | Beş modun cevap, süre, hata ve puan kurallarını kesinleştirmek; örnek içerik ve veri kullanım haklarını incelemek. | Her mod için doğrulanmış örnek soru ve uygulanabilir oyun kuralları vardır. |
 | **1 — Temel altyapı** | Django backend, **PostgreSQL şeması ve migration'ları**, REST API, WebSocket altyapısı, Vue uygulaması, hesap ve misafir oturumları. | Web istemcisi API'ye bağlanır; kalıcı kayıtlar PostgreSQL'de tutulur; iki istemci canlı oturuma bağlanır. **Tamamlandı.** |
-| **2 — İçerik yönetimi** | Futbolcu, takım, kariyer, maç, skor ve ilk 11 verilerini PostgreSQL'de modellemek; API içe aktarma, editör onayı, çeviri ve yayın akışı. | Beş mod için onaylı sorular üretilebilir; doğrulanmamış veri oyuncuya gösterilmez. |
+| **2 — İçerik yönetimi** | Futbolcu, takım, kariyer, maç, skor ve ilk 11 verilerini PostgreSQL'de modellemek; API içe aktarma, editör onayı, çeviri ve yayın akışı. | Beş mod için onaylı sorular üretilebilir; doğrulanmamış veri oyuncuya gösterilmez. **Tamamlandı.** |
 | **3 — Oyun motoru ve pratik** | Sunucu tarafında soru seçimi, süre, cevap doğrulaması ve puanlama; Vue tarafında beş modun modern, futbol temalı ekranları. | Beş mod iki dilde tek başına baştan sona oynanır. |
 | **4 — Derecesiz çok oyunculu oyun** | Asenkron düello, davet, özel oda ve canlı derecesiz maçlar; bağlantı kopması ve süresi dolan oyunların ele alınması. | Düello farklı zamanlarda tamamlanır; 2–8 kişi özel odada oynar. |
 | **5 — Ranked ve liderlik tablosu** | Canlı eşleştirme, maç sonucu ve ortak derece; derece hareketlerinin **PostgreSQL işlemleriyle atomik** kaydı. | Yalnız uygun maç dereceyi değiştirir; tekrar gelen sonuç aynı maça ikinci kez puan yazmaz. |

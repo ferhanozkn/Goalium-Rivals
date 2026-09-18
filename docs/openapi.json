@@ -60,6 +60,217 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
           description: ''
+  /api/v1/content/editor/questions:
+    post:
+      operationId: content_editor_questions_create
+      tags:
+      - content-editor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuestionEditor'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/QuestionEditor'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/QuestionEditor'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionEditor'
+          description: ''
+  /api/v1/content/editor/questions/{question_id}:
+    get:
+      operationId: content_editor_questions_retrieve
+      parameters:
+      - in: path
+        name: question_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - content-editor
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionEditor'
+          description: ''
+  /api/v1/content/editor/questions/{question_id}/transition:
+    post:
+      operationId: content_editor_questions_transition_create
+      parameters:
+      - in: path
+        name: question_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - content-editor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                target_status:
+                  type: string
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionEditor'
+          description: ''
+  /api/v1/content/editor/sources:
+    post:
+      operationId: content_editor_sources_create
+      tags:
+      - content-editor
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SourceReference'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SourceReference'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SourceReference'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceReference'
+          description: ''
+  /api/v1/content/imports:
+    post:
+      operationId: content_imports_create
+      tags:
+      - content-imports
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ImportRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ImportRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJob'
+          description: ''
+  /api/v1/content/imports/{job_id}:
+    get:
+      operationId: content_imports_retrieve
+      parameters:
+      - in: path
+        name: job_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - content-imports
+      security:
+      - jwtAuth: []
+      - cookieAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJob'
+          description: ''
+  /api/v1/content/questions:
+    get:
+      operationId: content_questions_list
+      parameters:
+      - in: query
+        name: language
+        schema:
+          type: string
+          enum:
+          - en
+          - tr
+      tags:
+      - content
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/QuestionPublic'
+          description: ''
+  /api/v1/content/questions/{question_id}:
+    get:
+      operationId: content_questions_retrieve
+      parameters:
+      - in: query
+        name: language
+        schema:
+          type: string
+          enum:
+          - en
+          - tr
+      - in: path
+        name: question_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - content
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuestionPublic'
+          description: ''
   /api/v1/guest/session:
     post:
       operationId: guest_session_create
@@ -236,6 +447,16 @@ components:
       required:
       - tokens
       - user
+    DifficultyEnum:
+      enum:
+      - easy
+      - medium
+      - hard
+      type: string
+      description: |-
+        * `easy` - Easy
+        * `medium` - Medium
+        * `hard` - Hard
     GameSession:
       type: object
       properties:
@@ -317,6 +538,144 @@ components:
       - expires_at
       - guest_session_id
       - guest_token
+    ImportJob:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        provider:
+          allOf:
+          - $ref: '#/components/schemas/ImportJobProviderEnum'
+          readOnly: true
+        source_url:
+          type: string
+          format: uri
+          readOnly: true
+        license_name:
+          type: string
+          readOnly: true
+        license_status:
+          allOf:
+          - $ref: '#/components/schemas/LicenseStatus56aEnum'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ImportJobStatusEnum'
+          readOnly: true
+        record_count:
+          type: integer
+          readOnly: true
+        imported_count:
+          type: integer
+          readOnly: true
+        skipped_count:
+          type: integer
+          readOnly: true
+        error_count:
+          type: integer
+          readOnly: true
+        error_message:
+          type: string
+          readOnly: true
+        started_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        finished_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - error_count
+      - error_message
+      - finished_at
+      - id
+      - imported_count
+      - license_name
+      - license_status
+      - provider
+      - record_count
+      - skipped_count
+      - source_url
+      - started_at
+      - status
+    ImportJobProviderEnum:
+      enum:
+      - wikidata
+      - openfootball
+      - manual
+      type: string
+      description: |-
+        * `wikidata` - Wikidata
+        * `openfootball` - openfootball
+        * `manual` - Manual
+    ImportJobStatusEnum:
+      enum:
+      - pending
+      - running
+      - completed
+      - failed
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `running` - Running
+        * `completed` - Completed
+        * `failed` - Failed
+    ImportRequest:
+      type: object
+      properties:
+        provider:
+          $ref: '#/components/schemas/ImportRequestProviderEnum'
+        source_url:
+          type: string
+          format: uri
+          maxLength: 500
+        license_name:
+          type: string
+          maxLength: 160
+        license_status:
+          allOf:
+          - $ref: '#/components/schemas/ImportRequestLicenseStatusEnum'
+          default: pending
+        records:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+      required:
+      - license_name
+      - provider
+      - records
+      - source_url
+    ImportRequestLicenseStatusEnum:
+      enum:
+      - pending
+      - verified
+      - blocked
+      type: string
+      description: |-
+        * `pending` - pending
+        * `verified` - verified
+        * `blocked` - blocked
+    ImportRequestProviderEnum:
+      enum:
+      - wikidata
+      - openfootball
+      - manual
+      type: string
+      description: |-
+        * `wikidata` - wikidata
+        * `openfootball` - openfootball
+        * `manual` - manual
     KindEnum:
       enum:
       - practice
@@ -345,6 +704,16 @@ components:
       description: |-
         * `tr` - tr
         * `en` - en
+    LicenseStatus56aEnum:
+      enum:
+      - pending
+      - verified
+      - blocked
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `verified` - Verified
+        * `blocked` - Blocked
     Login:
       type: object
       properties:
@@ -531,6 +900,20 @@ components:
       - duration_seconds
       - id
       - title_key
+    ModeEnum:
+      enum:
+      - hangman
+      - career_path
+      - timed_trivia
+      - historical_score
+      - missing_lineup
+      type: string
+      description: |-
+        * `hangman` - Hangman
+        * `career_path` - Career path
+        * `timed_trivia` - Timed trivia
+        * `historical_score` - Historical score
+        * `missing_lineup` - Missing lineup
     PracticeSessionCreate:
       type: object
       properties:
@@ -563,6 +946,155 @@ components:
       description: |-
         * `tr` - Türkçe
         * `en` - English
+    PublicTranslation:
+      type: object
+      properties:
+        language:
+          $ref: '#/components/schemas/Language906Enum'
+        prompt:
+          type: string
+        choices:
+          type: array
+          items: {}
+        hints:
+          type: array
+          items: {}
+      required:
+      - choices
+      - hints
+      - language
+      - prompt
+    QuestionEditor:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        mode:
+          $ref: '#/components/schemas/ModeEnum'
+        difficulty:
+          $ref: '#/components/schemas/DifficultyEnum'
+        status:
+          allOf:
+          - $ref: '#/components/schemas/QuestionEditorStatusEnum'
+          readOnly: true
+        created_by:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        approved_by:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        approved_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        published_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        payload:
+          allOf:
+          - $ref: '#/components/schemas/QuestionPayloadEditor'
+          nullable: true
+        translations:
+          type: array
+          items:
+            $ref: '#/components/schemas/QuestionTranslationEditor'
+        source_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          writeOnly: true
+        source_references:
+          type: array
+          items:
+            $ref: '#/components/schemas/SourceReference'
+          readOnly: true
+      required:
+      - approved_at
+      - approved_by
+      - created_at
+      - created_by
+      - id
+      - mode
+      - published_at
+      - source_references
+      - status
+      - updated_at
+    QuestionEditorStatusEnum:
+      enum:
+      - draft
+      - in_review
+      - approved
+      - published
+      - retired
+      type: string
+      description: |-
+        * `draft` - Draft
+        * `in_review` - In review
+        * `approved` - Approved
+        * `published` - Published
+        * `retired` - Retired
+    QuestionPayloadEditor:
+      type: object
+      properties:
+        public_payload: {}
+        answer_data: {}
+    QuestionPublic:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        mode:
+          allOf:
+          - $ref: '#/components/schemas/ModeEnum'
+          readOnly: true
+        difficulty:
+          allOf:
+          - $ref: '#/components/schemas/DifficultyEnum'
+          readOnly: true
+        translation:
+          allOf:
+          - $ref: '#/components/schemas/PublicTranslation'
+          readOnly: true
+        payload:
+          readOnly: true
+      required:
+      - difficulty
+      - id
+      - mode
+      - payload
+      - translation
+    QuestionTranslationEditor:
+      type: object
+      properties:
+        language:
+          $ref: '#/components/schemas/Language88eEnum'
+        prompt:
+          type: string
+        choices: {}
+        hints: {}
+      required:
+      - language
+      - prompt
     Register:
       type: object
       properties:
@@ -583,6 +1115,37 @@ components:
       - display_name
       - email
       - password
+    SourceReference:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        provider:
+          type: string
+          maxLength: 80
+        url:
+          type: string
+          format: uri
+          maxLength: 500
+        license_name:
+          type: string
+          maxLength: 160
+        license_status:
+          $ref: '#/components/schemas/LicenseStatus56aEnum'
+        accessed_at:
+          type: string
+          format: date-time
+          readOnly: true
+        notes:
+          type: string
+      required:
+      - accessed_at
+      - id
+      - license_name
+      - provider
+      - url
     TokenPair:
       type: object
       properties:
@@ -624,6 +1187,10 @@ components:
       in: header
       name: X-Guest-Token
       description: POST /api/v1/guest/session ile alınan kısa ömürlü misafir token'ı.
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
     jwtAuth:
       type: http
       scheme: bearer

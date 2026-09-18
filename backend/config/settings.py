@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "rest_framework",
     "apps.accounts",
+    "apps.content",
+    "apps.imports",
     "apps.quiz",
     "apps.realtime",
 ]
