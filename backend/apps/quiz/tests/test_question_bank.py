@@ -1,5 +1,6 @@
 from apps.quiz.management.commands.prepare_question_bank import (
     _build_definitions,
+    _build_hangman_definitions,
     _lineup_candidate,
 )
 
@@ -42,14 +43,27 @@ def test_build_definitions_creates_score_hangman_and_trivia_candidates():
         ]
     }
 
-    definitions = _build_definitions(matches, score_limit=2, trivia_limit=2, hangman_limit=2)
+    definitions = _build_definitions(matches, score_limit=2, trivia_limit=2)
     modes = [definition[0]["mode"] for definition in definitions]
 
     assert modes.count("historical_score") == 2
-    assert modes.count("hangman") == 2
     assert modes.count("timed_trivia") == 2
     assert all(definition[0]["mode"] != "published" for definition in definitions)
     assert all("answer_data" in definition[0] for definition in definitions)
+
+
+def test_hangman_definitions_use_footballers_from_wikidata():
+    definitions = _build_hangman_definitions(
+        [
+            {"player_id": "Q1", "player": "Ada Player", "player_tr": "Ada Oyuncu"},
+            {"player_id": "Q2", "player": "Bora Player", "player_tr": "Bora Oyuncu"},
+        ],
+        limit=2,
+    )
+
+    assert [definition[0]["mode"] for definition in definitions] == ["hangman", "hangman"]
+    assert all(definition[0]["public_payload"]["category"] == "footballer" for definition in definitions)
+    assert definitions[0][0]["answer_data"]["canonical"] == "Ada Player"
 
 
 def test_lineup_candidate_hides_one_starter_and_infers_rows():

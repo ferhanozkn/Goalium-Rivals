@@ -121,7 +121,7 @@ def _question_definition(
     }
 
 
-def _save_question(definition: dict, sources: list[SourceReference]) -> bool:
+def _save_question(definition: dict, sources: list[SourceReference]) -> tuple[bool, bool]:
     question, created = Question.objects.get_or_create(
         seed_key=definition["seed_key"],
         defaults={
@@ -131,7 +131,7 @@ def _save_question(definition: dict, sources: list[SourceReference]) -> bool:
         },
     )
     if not created and question.status != "draft":
-        return False
+        return False, False
 
     QuestionPayload.objects.update_or_create(
         question=question,
@@ -152,7 +152,7 @@ def _save_question(definition: dict, sources: list[SourceReference]) -> bool:
             },
         )
     question.source_references.set(sources)
-    return True
+    return True, created
 
 
 def _fetch_matches(fetcher: RemoteFetcher) -> dict:
@@ -320,7 +320,7 @@ def _lineup_candidate(match: dict, team_lineup: dict) -> dict | None:
     }
 
 
-def _build_definitions(matches: dict, score_limit: int, trivia_limit: int, hangman_limit: int) -> list[tuple[dict, list[SourceInfo]]]:
+def _build_definitions(matches: dict, score_limit: int, trivia_limit: int) -> list[tuple[dict, list[SourceInfo]]]:
     rows = matches["matches"]
     definitions: list[tuple[dict, list[SourceInfo]]] = []
     for match in rows[:score_limit]:
@@ -340,22 +340,6 @@ def _build_definitions(matches: dict, score_limit: int, trivia_limit: int, hangm
             answer_data={"regulation_home_goals": match["home_goals"], "regulation_away_goals": match["away_goals"]},
             tr={"prompt": f"{match['date']} tarihinde {match['home']} ile {match['away']} arasındaki maçın skoru neydi?", "hints": ["Premier League 2023/24", "Normal süre skoru"]},
             en={"prompt": f"What was the score of {match['home']} vs {match['away']} on {match['date']}?", "hints": ["Premier League 2023/24", "Regulation score"]},
-        )
-        definitions.append((definition, [OPENFOOTBALL_SOURCE]))
-
-    teams = sorted({team for match in rows for team in (match["home"], match["away"])})
-    for team in teams[:hangman_limit]:
-        seed = f"pilot:hangman:openfootball:{_slug(team)}"
-        answer = team
-        word_length = len(re.sub(r"[^A-Za-z0-9À-ÿ]", "", answer))
-        definition = _question_definition(
-            seed_key=seed[:120],
-            mode="hangman",
-            difficulty="easy",
-            public_payload={"category": "team", "word_length": word_length},
-            answer_data={"canonical": answer, "accepted_answers": {"tr": [answer], "en": [answer]}},
-            tr={"prompt": "2023/24 Premier League takımı olan bu kelimeyi bulun.", "hints": ["İngiltere", f"Harf sayısı: {word_length}"]},
-            en={"prompt": "Find this 2023/24 Premier League team.", "hints": ["England", f"Letter count: {word_length}"]},
         )
         definitions.append((definition, [OPENFOOTBALL_SOURCE]))
 
@@ -383,6 +367,40 @@ def _build_definitions(matches: dict, score_limit: int, trivia_limit: int, hangm
         definitions.append((definition, [OPENFOOTBALL_SOURCE]))
         trivia_count += 1
     return definitions
+
+
+def _build_hangman_definitions(rows: list[dict], limit: int) -> list[tuple[dict, list[SourceInfo]]]:
+    grouped: dict[str, dict] = {}
+    for row in rows:
+        grouped.setdefault(row["player_id"], row)
+
+    definitions = []
+    for player_id, player in sorted(grouped.items()):
+        answer = player["player"]
+        word_length = len(re.sub(r"[^A-Za-zÀ-ÿ]", "", answer))
+        definition = _question_definition(
+            seed_key=f"pilot:hangman:wikidata:{_slug(player_id)}"[:120],
+            mode="hangman",
+            difficulty="medium",
+            public_payload={"category": "footballer", "word_length": word_length},
+            answer_data={
+                "canonical": answer,
+                "accepted_answers": {"tr": [player["player_tr"], answer], "en": [answer]},
+            },
+            tr={"prompt": "Bu futbolcunun adını harfleri açarak bulun.", "hints": ["Futbolcu", f"Harf sayısı: {word_length}"]},
+            en={"prompt": "Reveal the name of this footballer letter by letter.", "hints": ["Footballer", f"Letter count: {word_length}"]},
+        )
+        definitions.append((definition, [WIKIDATA_SOURCE]))
+        if len(definitions) >= limit:
+            break
+    return definitions
+
+
+def _remove_legacy_hangman_drafts() -> int:
+    legacy = Question.objects.filter(status="draft", seed_key__startswith="pilot:hangman:openfootball:")
+    count = legacy.count()
+    legacy.delete()
+    return count
 
 
 def _build_career_definitions(rows: list[dict], limit: int) -> list[tuple[dict, list[SourceInfo]]]:
@@ -470,12 +488,17 @@ class Command(BaseCommand):
         except RemoteDataError as exc:
             raise CommandError(str(exc)) from exc
 
-        definitions = _build_definitions(matches, options["score_limit"], options["trivia_limit"], options["hangman_limit"])
-        if not options["skip_career"] and options["career_limit"]:
+        definitions = _build_definitions(matches, options["score_limit"], options["trivia_limit"])
+        career_rows = []
+        if (not options["skip_career"] and options["career_limit"]) or options["hangman_limit"]:
             try:
-                definitions.extend(_build_career_definitions(_fetch_career_rows(fetcher), options["career_limit"]))
+                career_rows = _fetch_career_rows(fetcher)
             except RemoteDataError as exc:
-                self.stdout.write(self.style.WARNING(f"Kariyer adayları atlandı: {exc}"))
+                self.stdout.write(self.style.WARNING(f"Wikidata adayları atlandı: {exc}"))
+        if options["hangman_limit"]:
+            definitions.extend(_build_hangman_definitions(career_rows, options["hangman_limit"]))
+        if not options["skip_career"] and options["career_limit"]:
+            definitions.extend(_build_career_definitions(career_rows, options["career_limit"]))
         if not options["skip_lineup"] and options["lineup_limit"]:
             try:
                 definitions.extend(_build_lineup_definitions(_fetch_lineup_candidates(fetcher, options["lineup_limit"])))
@@ -486,21 +509,26 @@ class Command(BaseCommand):
             (info.provider, info.url): _source(info)
             for info in (OPENFOOTBALL_SOURCE, WIKIDATA_SOURCE, STATSBOMB_SOURCE)
         }
+        removed_legacy = _remove_legacy_hangman_drafts()
         created = 0
+        refreshed = 0
         skipped = 0
         for definition, source_infos in definitions:
             source_refs = []
             for info in source_infos:
                 key = (info.provider, info.url)
                 source_refs.append(sources.get(key) or _source(info))
-            if _save_question(definition, source_refs):
-                created += 1
+            saved, was_created = _save_question(definition, source_refs)
+            if saved:
+                created += int(was_created)
+                refreshed += int(not was_created)
             else:
                 skipped += 1
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Pilot soru hazırlığı tamamlandı: {created} yeni draft, {skipped} mevcut kayıt atlandı; "
-                f"kaynakta {len(matches['matches'])} maç işlendi."
+                f"Pilot soru hazırlığı tamamlandı: {created} yeni draft, {refreshed} mevcut draft güncellendi, "
+                f"{skipped} yayın akışındaki kayıt atlandı; "
+                f"{removed_legacy} eski takım-adı çöp adam draftı kaldırıldı; kaynakta {len(matches['matches'])} maç işlendi."
             )
         )

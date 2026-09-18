@@ -99,7 +99,7 @@ Ortak kurallar:
 
 ### 4.1 Çöp adam
 
-- **Soru:** futbolla ilgili bir kelime/ifade (oyuncu, kulüp, teknik direktör, stadyum, turnuva) + kategori etiketi.
+- **Soru:** bir futbolcunun adı + kategori etiketi.
 - **Gösterim:** boşluk ve tire baştan açık; harfler gizli.
 - **Hak:** 6 yanlış harf. Süre: 90 sn.
 - **İpucu:** en fazla 2 ipucu (ör. ülke, dönem); her ipucu 15 puan düşürür.

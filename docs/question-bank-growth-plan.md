@@ -10,7 +10,15 @@ Pilot adaylarını çekip `draft` olarak hazırlamak için backend içinde şu k
 python manage.py prepare_question_bank
 ```
 
-Komut varsayılan olarak 20 tarihi skor, 10 çöp adam, 20 süreli genel kültür, 10 kariyer yolu ve 5 ilk 11 adayı üretir. İlk 11 adaylarının kaynağı lisans incelemesi beklediği için yayınlanabilir kabul edilmez. Tekrar çalıştırma aynı `seed_key` değerlerini günceller; editör akışına girmiş kayıtları ezmez.
+Komut varsayılan olarak 20 tarihi skor, 10 **futbolcu çöp adamı**, 20 süreli genel kültür, 10 kariyer yolu ve 5 ilk 11 adayı üretir. İlk 11 adaylarının kaynağı lisans incelemesi beklediği için yayınlanabilir kabul edilmez. Tekrar çalıştırma aynı `seed_key` değerlerini günceller; editör akışına girmiş kayıtları ezmez.
+
+Lisansı doğrulanmış pilot soruları yayınlama işlemi ayrıca onay parametresiyle çalıştırılır:
+
+```bash
+python manage.py publish_question_bank --prefix pilot: --confirm
+```
+
+Bu komut doğrulanmamış kaynaklara bağlı soruları atlar; ilk 11 adayları hak incelemesi tamamlanana kadar `draft` kalır.
 
 ## 1. Başlangıç ve hedefler
 
@@ -66,4 +74,4 @@ Dalga 1 her mod için veri kalitesini ve üretim süresini ölçer. Dalga 2, ba�
 
 ## 5. İlk uygulanacak küçük paket
 
-Önce 10 çöp adam + 20 tarihi lig skoru + 20 genel kültür hedefiyle başlayın. Bunlar CC0 kaynaklardan en temiz otomasyon yolunu sunar. Aynı dönemde 10 kariyer adayını ve 5 ilk 11 adayını yalnız hak ve veri bütünlüğü süzgecinden geçirin; yayın kararı bu süzgeçten sonra verilsin. Pilotun gerçek üretim/verim ölçümleri Dalga 2 hedefini kesinleştirsin.
+Önce 10 futbolcu çöp adamı + 20 tarihi lig skoru + 20 genel kültür hedefiyle başlayın. Bunlar CC0 kaynaklardan en temiz otomasyon yolunu sunar. Aynı dönemde 10 kariyer adayını ve 5 ilk 11 adayını yalnız hak ve veri bütünlüğü süzgecinden geçirin; yayın kararı bu süzgeçten sonra verilsin. Pilotun gerçek üretim/verim ölçümleri Dalga 2 hedefini kesinleştirsin.
