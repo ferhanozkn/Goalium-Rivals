@@ -80,7 +80,9 @@ Davetle başlayan maçlar, özel odalar, asenkron düellolar ve pratik oyunlar r
 | Frontend | Vue 3 + Vite + Pinia + Vue Router + vue-i18n | Modern, futbol temalı arayüz |
 | API şeması | OpenAPI (drf-spectacular) | Mobil istemci sözleşmesinin kaynağı |
 | Test | pytest + pytest-django, Vitest, Playwright | Playwright iki tarayıcılı canlı maç testleri için |
-| Dağıtım | Docker Compose (geliştirme) | postgres, redis, backend, worker, frontend servisleri |
+| Dağıtım | Docker Compose (geliştirme), DigitalOcean (bulut) | postgres, redis, backend, worker, frontend servisleri |
+
+**Bulut sağlayıcısı:** DigitalOcean kullanılacaktır. Yerel geliştirme Docker Compose ile yapılır; staging ve üretim ortamları container tabanlı servisler olarak DigitalOcean üzerinde çalıştırılır. DigitalOcean ürün seçimi, bölge ve ağ/topoloji ayrıntıları dağıtım tasarımında kesinleştirilecek; PostgreSQL kalıcı verinin, Redis ise yalnız geçici gerçek zamanlı durumun kaynağı olmaya devam edecektir.
 
 ---
 
