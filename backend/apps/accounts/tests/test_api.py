@@ -3,6 +3,12 @@ from rest_framework.test import APITestCase
 
 
 class AccountApiTests(APITestCase):
+    def test_health_reports_postgres_and_redis(self):
+        response = self.client.get(reverse("health"))
+
+        self.assertEqual(response.status_code, 200, response.data)
+        self.assertEqual(response.data, {"status": "ok", "database": "ok", "redis": "ok"})
+
     def test_guest_session_can_be_created_and_used_for_me(self):
         response = self.client.post(reverse("guest-session"), {"display_name": "Test Guest"}, format="json")
         self.assertEqual(response.status_code, 201)

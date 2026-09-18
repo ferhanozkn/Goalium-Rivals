@@ -1,4 +1,6 @@
 from django.urls import reverse
+from io import StringIO
+from django.core.management import call_command
 from rest_framework.test import APITestCase
 
 from apps.content.models import Question, SourceReference
@@ -100,3 +102,14 @@ class ContentApiTests(APITestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(Question.objects.get(id=question_id).status, "approved")
+
+    def test_catalog_validation_command_accepts_published_bilingual_content(self):
+        question_id = self.create_question()
+        for target_status in ["in_review", "approved", "published"]:
+            response = self.transition(question_id, target_status)
+            self.assertEqual(response.status_code, 200, response.data)
+
+        output = StringIO()
+        call_command("validate_catalog", stdout=output)
+
+        self.assertIn("Catalog validation passed", output.getvalue())

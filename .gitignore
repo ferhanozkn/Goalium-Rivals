@@ -4,6 +4,7 @@ __pycache__/
 *.egg-info/
 .venv/
 venv/
+.pytest_cache/
 
 # Django/local configuration
 .env
@@ -16,6 +17,11 @@ db.sqlite3
 node_modules/
 dist/
 .vite/
+frontend/node_modules/
+frontend/dist/
+qa/node_modules/
+qa/playwright-report/
+qa/test-results/
 
 # Tooling and OS files
 .DS_Store
@@ -23,3 +29,4 @@ dist/
 .vscode/
 coverage/
 htmlcov/
+.artifacts/

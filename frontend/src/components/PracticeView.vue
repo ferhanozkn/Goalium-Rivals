@@ -234,6 +234,7 @@ onBeforeUnmount(() => {
           :key="mode.id"
           class="practice-mode-card"
           :class="{ selected: selectedModes.includes(mode.id as PracticeMode) }"
+          :aria-pressed="selectedModes.includes(mode.id as PracticeMode)"
           type="button"
           @click="toggleMode(mode.id as PracticeMode)"
         >
@@ -268,7 +269,7 @@ onBeforeUnmount(() => {
     <div v-else-if="round" class="practice-game">
       <div class="practice-round-rail">
         <span>{{ roundLabel }}</span>
-        <span class="practice-timer" :class="{ urgent: timerUrgent }">{{ t("practice.time") }} {{ secondsRemaining }}{{ t("common.secondsShort") }}</span>
+        <span class="practice-timer" role="timer" aria-live="polite" :class="{ urgent: timerUrgent }">{{ t("practice.time") }} {{ secondsRemaining }}{{ t("common.secondsShort") }}</span>
       </div>
 
       <div class="practice-question-header">

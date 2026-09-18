@@ -337,7 +337,7 @@ onBeforeUnmount(() => {
     </div>
 
     <div v-else class="ranked-game">
-      <div class="multiplayer-rail ranked-rail"><span>{{ t("ranked.match") }} <strong>{{ activeMatch.id }}</strong></span><span>{{ activeMatch.participants.length }} / 2 {{ t("multiplayer.players") }}</span><span>{{ t("multiplayer.score") }} {{ score }}</span><span>{{ socketStatus === "connected" ? t("home.connected") : t("home.disconnected") }}</span><span v-if="currentRound" class="practice-timer" :class="{ urgent: secondsRemaining <= 10 }">{{ secondsRemaining }}{{ t("common.secondsShort") }}</span></div>
+      <div class="multiplayer-rail ranked-rail"><span>{{ t("ranked.match") }} <strong>{{ activeMatch.id }}</strong></span><span>{{ activeMatch.participants.length }} / 2 {{ t("multiplayer.players") }}</span><span>{{ t("multiplayer.score") }} {{ score }}</span><span>{{ socketStatus === "connected" ? t("home.connected") : t("home.disconnected") }}</span><span v-if="currentRound" class="practice-timer" role="timer" aria-live="polite" :class="{ urgent: secondsRemaining <= 10 }">{{ secondsRemaining }}{{ t("common.secondsShort") }}</span></div>
 
       <div v-if="activeMatch.status === 'finished' || activeMatch.status === 'forfeit'" class="multiplayer-lobby">
         <p class="eyebrow">{{ t("ranked.complete") }}</p>

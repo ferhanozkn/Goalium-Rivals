@@ -3,7 +3,7 @@
 **Çalışma adı:** Futbol Bilgi Oyunu (web + sonraki aşamada mobil)
 **Doküman dili:** Türkçe
 **Hedef okuyucu:** Codex, Claude Code ve insan geliştiriciler
-**Durum:** Faz 5 tamamlandı — sunucu otoriteli pratik ve derecesiz çok oyunculu katmanların üzerine canlı ranked matchmaking, atomik Elo derecesi ve global/sezon liderlik tabloları eklendi. Karar kaydı: [`docs/phase-0.md`](docs/phase-0.md); faz notları: [`docs/phase-1.md`](docs/phase-1.md), [`docs/phase-2.md`](docs/phase-2.md), [`docs/phase-3.md`](docs/phase-3.md), [`docs/phase-4.md`](docs/phase-4.md), [`docs/phase-5.md`](docs/phase-5.md).
+**Durum:** Faz 6 tamamlandı — kritik oyun/API akışları, iki tarayıcılı canlı maç, erişilebilirlik, temel yük, katalog kalitesi ve PostgreSQL yedekleme/geri yükleme kontrolleri geçti. Karar kaydı: [`docs/phase-0.md`](docs/phase-0.md); faz notları: [`docs/phase-1.md`](docs/phase-1.md), [`docs/phase-2.md`](docs/phase-2.md), [`docs/phase-3.md`](docs/phase-3.md), [`docs/phase-4.md`](docs/phase-4.md), [`docs/phase-5.md`](docs/phase-5.md), [`docs/phase-6.md`](docs/phase-6.md).
 
 ---
 
@@ -310,6 +310,7 @@ POST /api/v1/guest/session
 GET  /api/v1/modes
 GET  /api/v1/content/questions?language=tr
 GET  /api/v1/content/questions/{id}?language=en
+GET  /api/v1/health
 POST /api/v1/content/editor/questions
 POST /api/v1/content/editor/questions/{id}/transition
 POST /api/v1/content/imports
@@ -377,7 +378,7 @@ Kurallar:
 3. **İdempotenslik:** maç sonucu ve derece yazımı tekrar edilebilir çağrılara karşı UNIQUE kısıtlarla korunur.
 4. **Saat:** tüm zamanlar UTC saklanır; istemci yerelleştirmeyi kendisi yapar.
 5. **İçe aktarma sağlayıcıdan bağımsızdır:** harici veri önce `import_records` içine ham olarak yazılır, sonra eşleme (mapping) katmanı iç modellere dönüştürür. Sağlayıcı değişirse yalnız eşleme katmanı değişir.
-6. **Hile önleme:** doğru cevap sunucuda kalır; soru havuzundan seçim sunucuda yapılır; anormal hızlı cevap ve aşırı yüksek isabet oranları için işaretleme (flag) mekanizması Faz 6'da eklenir.
+6. **Hile önleme:** doğru cevap sunucuda kalır; soru havuzundan seçim sunucuda yapılır. `round.start` payload'ı ve server-authoritative cevap akışı Faz 6 testleriyle korunur; anormal hızlı cevap ve aşırı yüksek isabet oranları için işaretleme mekanizması sonraki operasyonel izleme paketi olarak takip edilir.
 
 ---
 
@@ -391,7 +392,7 @@ Kurallar:
 | **3 — Oyun motoru ve pratik** | Sunucu tarafında soru seçimi, süre, cevap doğrulaması ve puanlama; Vue tarafında beş modun modern, futbol temalı ekranları. | Beş mod iki dilde tek başına baştan sona oynanır. **Tamamlandı.** |
 | **4 — Derecesiz çok oyunculu oyun** | Asenkron düello, davet, özel oda ve canlı derecesiz maçlar; bağlantı kopması ve süresi dolan oyunların ele alınması. | Düello farklı zamanlarda tamamlanır; 2–8 kişi özel odada oynar. **Tamamlandı.** |
 | **5 — Ranked ve liderlik tablosu** | Canlı eşleştirme, maç sonucu ve ortak derece; derece hareketlerinin **PostgreSQL işlemleriyle atomik** kaydı. | Yalnız uygun maç dereceyi değiştirir; tekrar gelen sonuç aynı maça ikinci kez puan yazmaz. **Tamamlandı.** |
-| **6 — Kalite ve kapalı beta** | Oyun, API ve iki tarayıcılı canlı maç testleri; erişilebilirlik, yük, içerik kalitesi ve **PostgreSQL yedekleme/geri yükleme** kontrolleri. | Kritik akışlar ve veri kurtarma doğrulanır; web sürümü kapalı beta için hazırdır. |
+| **6 — Kalite ve kapalı beta** | Oyun, API ve iki tarayıcılı canlı maç testleri; erişilebilirlik, yük, içerik kalitesi ve **PostgreSQL yedekleme/geri yükleme** kontrolleri. | Kritik akışlar ve veri kurtarma doğrulanır; web sürümü kapalı beta için hazırdır. **Tamamlandı.** Ayrıntılar: [`docs/phase-6.md`](docs/phase-6.md) |
 | **7 — Mobil hazırlığı** | REST ve WebSocket sözleşmelerini sürümleyip mobil istemci için belgelemek. | Mobil uygulama aynı backend ve PostgreSQL verilerini API aracılığıyla kullanabilecek şekilde tasarım tamamlanır. |
 
 ---
@@ -448,7 +449,7 @@ Her madde otomatik testle doğrulanır.
 - API sözleşme testleri (OpenAPI şemasına uyum).
 - Playwright ile iki tarayıcı açıp uçtan uca canlı maç.
 - Erişilebilirlik: klavye ile oynanabilirlik, odak göstergesi, kontrast, ekran okuyucu etiketleri.
-- Yük testi: hedef eşzamanlı canlı maç sayısı Faz 6'da belirlenir.
+- Yük smoke testi: health uç noktasında 8 eşzamanlı istekle 80 istek; median 56.5 ms, p95 83.12 ms, hata 0. Canlı maç kapasite hedefi üretim gözlemleriyle ayrıca kesinleştirilecektir.
 
 ---
 
@@ -456,6 +457,7 @@ Her madde otomatik testle doğrulanır.
 
 - Günlük tam `pg_dump` + sürekli WAL arşivi (üretimde).
 - Geri yükleme tatbikatı en az her yayın öncesi bir kez yapılır ve sonucu kayıt altına alınır.
+- Yerel tatbikat betiği: [`infra/backup/pg_backup_restore_smoke.sh`](infra/backup/pg_backup_restore_smoke.sh). Üretimde günlük tam `pg_dump` + sürekli WAL arşivi DigitalOcean operasyon planında uygulanır.
 - Redis yedeklenmez; kayıp durumunda yalnız devam eden canlı maçlar iptal edilir ve oyunculara bilgi verilir.
 
 ---

@@ -250,8 +250,8 @@ onBeforeUnmount(() => {
         <p>{{ t("multiplayer.description") }}</p>
       </div>
       <div class="multiplayer-tabs">
-        <button :class="{ active: kind === 'room' }" type="button" @click="kind = 'room'">{{ t("multiplayer.roomTab") }}</button>
-        <button :class="{ active: kind === 'duel' }" type="button" @click="kind = 'duel'">{{ t("multiplayer.duelTab") }}</button>
+        <button :class="{ active: kind === 'room' }" :aria-pressed="kind === 'room'" type="button" @click="kind = 'room'">{{ t("multiplayer.roomTab") }}</button>
+        <button :class="{ active: kind === 'duel' }" :aria-pressed="kind === 'duel'" type="button" @click="kind = 'duel'">{{ t("multiplayer.duelTab") }}</button>
       </div>
 
       <div v-if="kind === 'room'" class="multiplayer-grid">
@@ -259,8 +259,8 @@ onBeforeUnmount(() => {
           <p class="eyebrow">{{ t("multiplayer.createRoom") }}</p>
           <h3>{{ t("multiplayer.roomTitle") }}</h3>
           <div class="segmented-control">
-            <button :class="{ active: roomMode === 'mixed' }" type="button" @click="roomMode = 'mixed'">{{ t("multiplayer.mixed") }}</button>
-            <button v-for="mode in modes" :key="mode.id" :class="{ active: roomMode === mode.id }" type="button" @click="roomMode = mode.id as PracticeMode">{{ modeTitle(mode) }}</button>
+            <button :class="{ active: roomMode === 'mixed' }" :aria-pressed="roomMode === 'mixed'" type="button" @click="roomMode = 'mixed'">{{ t("multiplayer.mixed") }}</button>
+            <button v-for="mode in modes" :key="mode.id" :class="{ active: roomMode === mode.id }" :aria-pressed="roomMode === mode.id" type="button" @click="roomMode = mode.id as PracticeMode">{{ modeTitle(mode) }}</button>
           </div>
           <button class="button button-primary" type="button" :disabled="loading" @click="createRoomAction">{{ t("multiplayer.create") }}</button>
         </div>
@@ -301,7 +301,7 @@ onBeforeUnmount(() => {
         <span>{{ kind === 'room' ? t("multiplayer.room") : t("multiplayer.duel") }} <strong>{{ activeMatch?.room_code || activeMatch?.id }}</strong></span>
         <span>{{ activeMatch?.participants.length || 0 }} / {{ activeMatch?.max_players || 2 }} {{ t("multiplayer.players") }}</span>
         <span>{{ t("multiplayer.score") }} {{ score }}</span>
-        <span v-if="currentRound" class="practice-timer" :class="{ urgent: secondsRemaining <= 10 }">{{ secondsRemaining }}{{ t("common.secondsShort") }}</span>
+        <span v-if="currentRound" class="practice-timer" role="timer" aria-live="polite" :class="{ urgent: secondsRemaining <= 10 }">{{ secondsRemaining }}{{ t("common.secondsShort") }}</span>
       </div>
 
       <div v-if="activeMatch?.status === 'waiting'" class="multiplayer-lobby">

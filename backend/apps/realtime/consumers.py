@@ -17,6 +17,24 @@ User = get_user_model()
 
 
 class MatchConsumer(AsyncJsonWebsocketConsumer):
+    @staticmethod
+    def serialize_round_state(state):
+        if state is None:
+            return None
+        serialized = dict(state)
+        for key in ("deadline", "server_now"):
+            value = serialized.get(key)
+            if hasattr(value, "isoformat"):
+                serialized[key] = value.isoformat()
+        return serialized
+
+    @classmethod
+    def serialize_answer_result(cls, result):
+        serialized = dict(result)
+        serialized["round"] = cls.serialize_round_state(serialized.get("round"))
+        serialized["next_round"] = cls.serialize_round_state(serialized.get("next_round"))
+        return serialized
+
     async def connect(self):
         self.match_id = self.scope["url_route"]["kwargs"]["match_id"]
         self.group_name = f"match_{self.match_id}"
@@ -64,7 +82,7 @@ class MatchConsumer(AsyncJsonWebsocketConsumer):
             except (MultiplayerConflict, ValidationError, ValueError) as exc:
                 await self.send_json({"type": "error", "code": "ANSWER_REJECTED", "message": str(exc)})
                 return
-            await self.send_json({"type": "answer.result", **result})
+            await self.send_json({"type": "answer.result", **self.serialize_answer_result(result)})
             await self.channel_layer.group_send(self.group_name, {"type": "match.state"})
             if result.get("phase") in {"advanced", "finished"}:
                 await self.channel_layer.group_send(self.group_name, {"type": "round.start"})
@@ -85,7 +103,7 @@ class MatchConsumer(AsyncJsonWebsocketConsumer):
     async def send_current_round(self):
         state = await self.get_current_round()
         if state:
-            await self.send_json({"type": "round.start", **state})
+            await self.send_json({"type": "round.start", **self.serialize_round_state(state)})
 
     async def resolve_identity(self):
         params = parse_qs(self.scope.get("query_string", b"").decode("utf-8"))

@@ -24,6 +24,8 @@ button, a { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: wait; opacity: 0.55; }
 a { color: inherit; text-decoration: none; }
+:focus-visible { outline: 2px solid var(--signal); outline-offset: 3px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 .app-shell { min-height: 100vh; padding: 0 5vw; background-image: linear-gradient(var(--line) 1px, transparent 1px), linear-gradient(90deg, var(--line) 1px, transparent 1px); background-size: 100% 56px, 56px 100%; background-position: 0 55px, 0 0; }
 .topbar { min-height: 72px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 2rem; }
@@ -204,4 +206,8 @@ h2 { margin-bottom: 0; font-size: clamp(1.9rem, 4vw, 3.8rem); letter-spacing: -0
   .score-separator { display: none; }
   .multiplayer-rail { grid-template-columns: 1fr; gap: 0.5rem; }
   .ranked-table-row { grid-template-columns: 0.35fr 1.5fr 0.7fr 0.55fr; gap: 0.5rem; font-size: 0.65rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
