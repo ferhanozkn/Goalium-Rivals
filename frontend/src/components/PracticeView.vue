@@ -5,6 +5,7 @@ import { useI18n } from "vue-i18n";
 import { createPracticeSession, submitPracticeAnswer } from "../lib/api";
 import { useSessionStore } from "../stores/session";
 import type { Language, ModeDefinition, PracticeMode, PracticeRound, PracticeSessionResponse } from "../types";
+import LineupPitch from "./LineupPitch.vue";
 
 const props = defineProps<{
   language: Language;
@@ -49,7 +50,6 @@ const roundLabel = computed(() =>
 );
 const pattern = computed(() => String(roundData.value.pattern ?? ""));
 const visibleEntries = computed(() => displayList("entries"));
-const visibleSlots = computed(() => displayList("slots"));
 const wrongLetters = computed(() => stringList("wrong_letters"));
 
 function stringList(key: string): string[] {
@@ -322,9 +322,7 @@ onBeforeUnmount(() => {
         </div>
 
         <div v-else class="mode-play-area">
-          <div class="lineup-slots">
-            <span v-for="slot in visibleSlots" :key="slot" class="entry-chip">{{ slot }}</span>
-          </div>
+          <LineupPitch :data="roundData" :language="activeLanguage" />
           <div class="answer-row">
             <input v-model="textInput" :placeholder="t('practice.playerPlaceholder')" :aria-label="t('practice.playerPlaceholder')" @keyup.enter="submitText" />
             <button class="button button-primary" type="button" :disabled="submitting || !textInput.trim()" @click="submitText">{{ t("practice.submit") }}</button>

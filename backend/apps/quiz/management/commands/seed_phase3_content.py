@@ -74,6 +74,7 @@ QUESTIONS = [
         "mode": "timed_trivia",
         "difficulty": "easy",
         "source": ("FIFA", "https://inside.fifa.com/tournaments/mens/worldcup/2018russia/news/worldcupathome-france-croatia-russia-2018-3072767"),
+        "additional_sources": [("DFB", "https://datencenter.dfb.de/datencenter/weltmeisterschaft/2018-in-russland/finale/sieger-halbfinale-1-sieger-halbfinale-2-2248356")],
         "public_payload": {},
         "answer_data": {"correct_index": 0},
         "translations": {
@@ -106,18 +107,29 @@ QUESTIONS = [
         "mode": "missing_lineup",
         "difficulty": "easy",
         "source": ("FIFA", "https://inside.fifa.com/tournaments/mens/worldcup/2018russia/news/worldcupathome-france-croatia-russia-2018-3072767"),
-        "public_payload": {"hidden_count": 1},
+        "public_payload": {
+            "hidden_count": 1,
+            "team": {"tr": "Fransa", "en": "France"},
+            "formation": "4-2-3-1",
+            "lineup": [
+                "Hugo Lloris",
+                "Lucas Hernandez", "Samuel Umtiti", "Raphaël Varane", "Benjamin Pavard",
+                "Paul Pogba", "N'Golo Kanté",
+                "Blaise Matuidi", "____", "Kylian Mbappé",
+                "Olivier Giroud",
+            ],
+        },
         "answer_data": {"accepted_answers": {"tr": ["Antoine Griezmann", "Griezmann"], "en": ["Antoine Griezmann", "Griezmann"]}},
         "translations": {
             "tr": {
                 "prompt": "2018 FIFA Dünya Kupası finalindeki Fransa ilk 11'inde eksik oyuncuyu bulun.",
                 "hints": ["Forvet hattında oynadı."],
-                "public_data": {"lineup": ["Hugo Lloris", "Benjamin Pavard", "Raphaël Varane", "Samuel Umtiti", "Lucas Hernandez", "N'Golo Kanté", "Paul Pogba", "Blaise Matuidi", "Kylian Mbappé", "Olivier Giroud", "____"]},
+                "public_data": {},
             },
             "en": {
                 "prompt": "Find the missing player in France's starting XI in the 2018 FIFA World Cup final.",
                 "hints": ["He played in the forward line."],
-                "public_data": {"lineup": ["Hugo Lloris", "Benjamin Pavard", "Raphaël Varane", "Samuel Umtiti", "Lucas Hernandez", "N'Golo Kanté", "Paul Pogba", "Blaise Matuidi", "Kylian Mbappé", "Olivier Giroud", "____"]},
+                "public_data": {},
             },
         },
     },
@@ -130,14 +142,16 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         for definition in QUESTIONS:
-            provider, url = definition["source"]
-            source, _ = SourceReference.objects.get_or_create(
-                provider=provider,
-                url=url,
-                defaults={"license_name": "Reference-only source policy", "license_status": "verified"},
-            )
-            source.license_status = "verified"
-            source.save(update_fields=["license_status", "updated_at"])
+            sources = []
+            for provider, url in [definition["source"], *definition.get("additional_sources", [])]:
+                source, _ = SourceReference.objects.get_or_create(
+                    provider=provider,
+                    url=url,
+                    defaults={"license_name": "Reference-only source policy", "license_status": "verified"},
+                )
+                source.license_status = "verified"
+                source.save(update_fields=["license_status", "updated_at"])
+                sources.append(source)
             question, _ = Question.objects.update_or_create(
                 seed_key=definition["seed_key"],
                 defaults={"mode": definition["mode"], "difficulty": definition["difficulty"]},
@@ -157,7 +171,7 @@ class Command(BaseCommand):
                         "public_data": translation.get("public_data", {}),
                     },
                 )
-            question.source_references.set([source])
+            question.source_references.set(sources)
             question.validate_publishable()
             question.status = "published"
             question.published_at = question.published_at or timezone.now()

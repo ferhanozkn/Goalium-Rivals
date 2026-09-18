@@ -133,6 +133,7 @@ Ortak kurallar:
 ### 4.5 İlk 11'deki eksik oyuncu
 
 - **Soru:** belirli bir maçın ilk 11'i saha diziliminde gösterilir; zorluğa göre 1 veya 2 oyuncu gizlenir.
+- **Gösterim verisi:** yayınlanan soru yükünde `formation` (ör. `4-2-3-1`) ve kaleciden hücuma doğru sıralanmış 11 öğelik `lineup` bulunur. Gizli oyuncu adı yalnız `answer_data` içinde saklanır; istemciye giden `lineup` içindeki yeri `____` ile belirtilir. Pratik, özel oda ve ranked aynı mini saha bileşenini kullanır.
 - **Cevap:** serbest metin (zor) veya 4 şık (kolay).
 - **Hak:** 2 tahmin. Süre: 45 sn.
 - **Puan:** doğru oyuncu başına 50 + tek kalan süre bonusu `min(20, floor(kalan saniye / 5))`.

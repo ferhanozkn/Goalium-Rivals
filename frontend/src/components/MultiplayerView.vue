@@ -15,6 +15,7 @@ import {
 } from "../lib/api";
 import { useSessionStore } from "../stores/session";
 import type { Language, ModeDefinition, MultiplayerAnswerResponse, MultiplayerResponse, PracticeMode, PracticeRound } from "../types";
+import LineupPitch from "./LineupPitch.vue";
 
 const props = defineProps<{ language: Language; modes: ModeDefinition[] }>();
 const emit = defineEmits<{ back: [] }>();
@@ -49,7 +50,6 @@ const secondsRemaining = computed(() => currentRound.value ? Math.max(0, Math.ce
 const activeMode = computed(() => props.modes.find((mode) => mode.id === currentRound.value?.mode));
 const isOwner = computed(() => active.value?.participant_id === activeMatch.value?.participants?.[0]?.id);
 const displayEntries = computed(() => displayList("entries"));
-const displaySlots = computed(() => displayList("slots"));
 
 function displayList(key: string): string[] {
   const value = roundData.value[key];
@@ -334,7 +334,7 @@ onBeforeUnmount(() => {
           <div v-else-if="currentRound.mode === 'career_path'" class="mode-play-area"><div class="entry-list"><span v-for="entry in displayEntries" :key="entry" class="entry-chip">{{ entry }}</span></div><div class="answer-row"><input v-model="textInput" :placeholder="t('practice.playerPlaceholder')" @keyup.enter="submitText" /><button class="button button-primary" type="button" :disabled="submitting || !textInput" @click="submitText">{{ t("practice.submit") }}</button></div></div>
           <div v-else-if="currentRound.mode === 'timed_trivia'" class="mode-play-area"><div class="choice-grid"><button v-for="(choice, index) in currentRound.choices" :key="choice" class="choice-button" type="button" :disabled="submitting" @click="submitChoice(index)"><span>{{ String.fromCharCode(65 + index) }}</span>{{ choice }}</button></div></div>
           <div v-else-if="currentRound.mode === 'historical_score'" class="mode-play-area"><div class="score-inputs"><label><span>{{ localized(roundData.home_team) }}</span><input v-model.number="homeScore" min="0" type="number" /></label><span class="score-separator">—</span><label><span>{{ localized(roundData.away_team) }}</span><input v-model.number="awayScore" min="0" type="number" /></label></div><button class="button button-primary" type="button" :disabled="submitting || homeScore === null || awayScore === null" @click="submitScore">{{ t("practice.submitScore") }}</button></div>
-          <div v-else class="mode-play-area"><div class="lineup-slots"><span v-for="slot in displaySlots" :key="slot" class="entry-chip">{{ slot }}</span></div><div class="answer-row"><input v-model="textInput" :placeholder="t('practice.playerPlaceholder')" @keyup.enter="submitText" /><button class="button button-primary" type="button" :disabled="submitting || !textInput" @click="submitText">{{ t("practice.submit") }}</button></div></div>
+          <div v-else class="mode-play-area"><LineupPitch :data="roundData" :language="activeMatch?.language ?? language" /><div class="answer-row"><input v-model="textInput" :placeholder="t('practice.playerPlaceholder')" @keyup.enter="submitText" /><button class="button button-primary" type="button" :disabled="submitting || !textInput" @click="submitText">{{ t("practice.submit") }}</button></div></div>
         </div>
       </div>
       <p v-if="error" class="error-message" role="alert">{{ error }}</p>

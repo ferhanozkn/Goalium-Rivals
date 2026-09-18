@@ -77,6 +77,11 @@ export const messages = {
       error: "Pratik oturumu başlatılamadı.",
       answerError: "Cevap işlenemedi. Tur durumunu yeniden kontrol et.",
     },
+    lineup: {
+      startingEleven: "İlk 11",
+      missingPlayer: "Eksik oyuncu",
+      pitchLabel: "{team} dizilişi: {formation}",
+    },
     multiplayer: {
       eyebrow: "Çok oyunculu",
       title: "Aynı sahada buluş.",
@@ -246,6 +251,11 @@ export const messages = {
       },
       error: "The practice session could not be started.",
       answerError: "The answer could not be processed. Check the round state and try again.",
+    },
+    lineup: {
+      startingEleven: "Starting XI",
+      missingPlayer: "Missing player",
+      pitchLabel: "{team} formation: {formation}",
     },
     multiplayer: {
       eyebrow: "Multiplayer",

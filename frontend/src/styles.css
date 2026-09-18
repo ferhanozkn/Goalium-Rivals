@@ -114,8 +114,23 @@ h2 { margin-bottom: 0; font-size: clamp(1.9rem, 4vw, 3.8rem); letter-spacing: -0
 .answer-row { display: flex; gap: 0.7rem; flex-wrap: wrap; }
 .answer-row input, .score-inputs input { min-width: 220px; border: 1px solid var(--line); border-radius: 0; background: var(--bg); color: var(--text); padding: 0.78rem 0.85rem; font: inherit; font-size: 0.75rem; outline: 0; }
 .answer-row input:focus, .score-inputs input:focus { border-color: var(--signal); }
-.entry-list, .lineup-slots { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.entry-list { display: flex; flex-wrap: wrap; gap: 0.6rem; }
 .entry-chip { border: 1px solid var(--line); color: var(--text); padding: 0.7rem 0.8rem; font-size: 0.72rem; }
+.lineup-figure { margin: 0; width: 100%; }
+.lineup-caption { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: 0.8rem; color: var(--text); font-size: 0.75rem; }
+.lineup-caption strong { color: var(--signal); font-size: 0.95rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.lineup-pitch { position: relative; min-height: 590px; background: var(--panel-raised); border: 1px solid #4a6646; overflow: hidden; }
+.lineup-field { position: absolute; inset: 12px; border: 1px solid #4a6646; pointer-events: none; }
+.lineup-center-line { position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid #4a6646; }
+.lineup-center-circle { position: absolute; width: 24%; aspect-ratio: 1; top: 50%; left: 50%; border: 1px solid #4a6646; border-radius: 50%; transform: translate(-50%, -50%); }
+.lineup-penalty { position: absolute; left: 26%; width: 48%; height: 17%; border: 1px solid #4a6646; }
+.lineup-penalty-top { top: -1px; }
+.lineup-penalty-bottom { bottom: -1px; }
+.lineup-rows { position: absolute; inset: 26px 18px; display: flex; flex-direction: column; justify-content: space-between; }
+.lineup-row { display: flex; flex: 1; justify-content: space-around; align-items: center; gap: 4px; }
+.lineup-player { display: grid; place-items: center; flex: 0 1 142px; min-width: 0; min-height: 46px; padding: 0.35rem 0.45rem; border: 1px solid #5b7655; background: var(--bg); color: var(--text); text-align: center; font-size: clamp(0.58rem, 1.2vw, 0.72rem); line-height: 1.25; overflow-wrap: anywhere; }
+.lineup-player-missing { border-color: var(--signal); background: var(--signal); color: var(--bg); font-weight: 600; }
+.lineup-fallback { display: flex; flex-wrap: wrap; gap: 0.6rem; }
 .choice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }
 .choice-button { border: 1px solid var(--line); background: transparent; color: var(--text); min-height: 56px; padding: 0.8rem; text-align: left; display: flex; align-items: center; gap: 0.8rem; font-size: 0.75rem; }
 .choice-button:hover, .choice-button.selected { border-color: var(--signal); color: var(--signal); }
@@ -206,6 +221,9 @@ h2 { margin-bottom: 0; font-size: clamp(1.9rem, 4vw, 3.8rem); letter-spacing: -0
   .score-separator { display: none; }
   .multiplayer-rail { grid-template-columns: 1fr; gap: 0.5rem; }
   .ranked-table-row { grid-template-columns: 0.35fr 1.5fr 0.7fr 0.55fr; gap: 0.5rem; font-size: 0.65rem; }
+  .lineup-pitch { min-height: 500px; }
+  .lineup-rows { inset: 20px 8px; }
+  .lineup-player { min-height: 48px; padding: 0.25rem 0.1rem; font-size: 0.58rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
