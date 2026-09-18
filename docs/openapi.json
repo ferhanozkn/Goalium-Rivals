@@ -1,0 +1,630 @@
+openapi: 3.0.3
+info:
+  title: Goalium Rivals API
+  version: 1.0.0
+  description: Futbol bilgi oyunu REST API'si.
+paths:
+  /api/v1/auth/login:
+    post:
+      operationId: auth_login_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Login'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Login'
+        required: true
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          description: ''
+  /api/v1/auth/register:
+    post:
+      operationId: auth_register_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Register'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Register'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Register'
+        required: true
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+          description: ''
+  /api/v1/guest/session:
+    post:
+      operationId: guest_session_create
+      tags:
+      - auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuestSessionCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/GuestSessionCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/GuestSessionCreate'
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuestSessionResponse'
+          description: ''
+  /api/v1/matches:
+    post:
+      operationId: matches_create
+      tags:
+      - quiz
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MatchCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MatchCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MatchCreate'
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Match'
+          description: ''
+  /api/v1/matches/{match_id}:
+    get:
+      operationId: matches_retrieve
+      parameters:
+      - in: path
+        name: match_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - quiz
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Match'
+          description: ''
+  /api/v1/matches/{match_id}/join:
+    post:
+      operationId: matches_join_create
+      parameters:
+      - in: path
+        name: match_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - quiz
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MatchJoinResponse'
+          description: ''
+  /api/v1/me:
+    get:
+      operationId: me_retrieve
+      tags:
+      - auth
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /api/v1/modes:
+    get:
+      operationId: modes_list
+      tags:
+      - quiz
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ModeDefinition'
+          description: ''
+  /api/v1/practice/sessions:
+    post:
+      operationId: practice_sessions_create
+      tags:
+      - quiz
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PracticeSessionCreate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PracticeSessionCreate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PracticeSessionCreate'
+        required: true
+      security:
+      - jwtAuth: []
+      - GuestTokenAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PracticeSessionResponse'
+          description: ''
+components:
+  schemas:
+    ActorTypeEnum:
+      enum:
+      - guest
+      - user
+      type: string
+      description: |-
+        * `guest` - guest
+        * `user` - user
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        tokens:
+          $ref: '#/components/schemas/TokenPair'
+      required:
+      - tokens
+      - user
+    GameSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/KindEnum'
+          readOnly: true
+        modes:
+          readOnly: true
+        language:
+          allOf:
+          - $ref: '#/components/schemas/Language88eEnum'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/GameSessionStatusEnum'
+          readOnly: true
+        started_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        finished_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - finished_at
+      - id
+      - kind
+      - language
+      - modes
+      - started_at
+      - status
+    GameSessionStatusEnum:
+      enum:
+      - waiting
+      - active
+      - finished
+      - expired
+      type: string
+      description: |-
+        * `waiting` - Waiting
+        * `active` - Active
+        * `finished` - Finished
+        * `expired` - Expired
+    GuestSessionCreate:
+      type: object
+      properties:
+        display_name:
+          type: string
+          default: ''
+          maxLength: 80
+    GuestSessionResponse:
+      type: object
+      properties:
+        guest_token:
+          type: string
+        guest_session_id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+      required:
+      - display_name
+      - expires_at
+      - guest_session_id
+      - guest_token
+    KindEnum:
+      enum:
+      - practice
+      - live_1v1
+      - async_duel
+      - room
+      type: string
+      description: |-
+        * `practice` - Practice
+        * `live_1v1` - Live 1v1
+        * `async_duel` - Async duel
+        * `room` - Room
+    Language88eEnum:
+      enum:
+      - tr
+      - en
+      type: string
+      description: |-
+        * `tr` - Türkçe
+        * `en` - English
+    Language906Enum:
+      enum:
+      - tr
+      - en
+      type: string
+      description: |-
+        * `tr` - tr
+        * `en` - en
+    Login:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          writeOnly: true
+      required:
+      - email
+      - password
+    Match:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        game_session_id:
+          type: string
+          format: uuid
+          readOnly: true
+        match_type:
+          allOf:
+          - $ref: '#/components/schemas/MatchTypeEnum'
+          readOnly: true
+        origin:
+          allOf:
+          - $ref: '#/components/schemas/MatchOriginEnum'
+          readOnly: true
+        is_mixed:
+          type: boolean
+          readOnly: true
+        language:
+          allOf:
+          - $ref: '#/components/schemas/Language88eEnum'
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/MatchStatusEnum'
+          readOnly: true
+        ranked_eligible:
+          type: boolean
+          readOnly: true
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/MatchParticipant'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        started_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        finished_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - created_at
+      - finished_at
+      - game_session_id
+      - id
+      - is_mixed
+      - language
+      - match_type
+      - origin
+      - participants
+      - ranked_eligible
+      - started_at
+      - status
+    MatchCreate:
+      type: object
+      properties:
+        language:
+          allOf:
+          - $ref: '#/components/schemas/Language906Enum'
+          default: tr
+        is_mixed:
+          type: boolean
+          default: true
+        origin:
+          allOf:
+          - $ref: '#/components/schemas/MatchCreateOriginEnum'
+          default: invite
+    MatchCreateOriginEnum:
+      enum:
+      - invite
+      - matchmaking
+      type: string
+      description: |-
+        * `invite` - invite
+        * `matchmaking` - matchmaking
+    MatchJoinResponse:
+      type: object
+      properties:
+        participant_id:
+          type: string
+          format: uuid
+        match:
+          $ref: '#/components/schemas/Match'
+      required:
+      - match
+      - participant_id
+    MatchOriginEnum:
+      enum:
+      - matchmaking
+      - invite
+      - room
+      type: string
+      description: |-
+        * `matchmaking` - Matchmaking
+        * `invite` - Invite
+        * `room` - Room
+    MatchParticipant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        display_name:
+          type: string
+          readOnly: true
+        score:
+          type: integer
+          readOnly: true
+        connected:
+          type: boolean
+          readOnly: true
+        joined_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - connected
+      - display_name
+      - id
+      - joined_at
+      - score
+    MatchStatusEnum:
+      enum:
+      - waiting
+      - live
+      - finished
+      - forfeit
+      type: string
+      description: |-
+        * `waiting` - Waiting
+        * `live` - Live
+        * `finished` - Finished
+        * `forfeit` - Forfeit
+    MatchTypeEnum:
+      enum:
+      - live_1v1
+      - practice
+      - async_duel
+      - room
+      type: string
+      description: |-
+        * `live_1v1` - Live 1v1
+        * `practice` - Practice
+        * `async_duel` - Async duel
+        * `room` - Room
+    ModeDefinition:
+      type: object
+      properties:
+        id:
+          type: string
+        title_key:
+          type: string
+        description_key:
+          type: string
+        duration_seconds:
+          type: integer
+      required:
+      - description_key
+      - duration_seconds
+      - id
+      - title_key
+    PracticeSessionCreate:
+      type: object
+      properties:
+        language:
+          allOf:
+          - $ref: '#/components/schemas/Language906Enum'
+          default: tr
+        modes:
+          type: array
+          items:
+            type: string
+            maxLength: 24
+      required:
+      - modes
+    PracticeSessionResponse:
+      type: object
+      properties:
+        session:
+          $ref: '#/components/schemas/GameSession'
+        actor_type:
+          $ref: '#/components/schemas/ActorTypeEnum'
+      required:
+      - actor_type
+      - session
+    PreferredLanguageEnum:
+      enum:
+      - tr
+      - en
+      type: string
+      description: |-
+        * `tr` - Türkçe
+        * `en` - English
+    Register:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        password:
+          type: string
+          writeOnly: true
+          minLength: 8
+        display_name:
+          type: string
+          maxLength: 80
+        preferred_language:
+          $ref: '#/components/schemas/PreferredLanguageEnum'
+      required:
+      - display_name
+      - email
+      - password
+    TokenPair:
+      type: object
+      properties:
+        access:
+          type: string
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        display_name:
+          type: string
+          maxLength: 80
+        preferred_language:
+          $ref: '#/components/schemas/PreferredLanguageEnum'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - display_name
+      - email
+      - id
+  securitySchemes:
+    GuestTokenAuth:
+      type: apiKey
+      in: header
+      name: X-Guest-Token
+      description: POST /api/v1/guest/session ile alınan kısa ömürlü misafir token'ı.
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

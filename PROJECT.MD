@@ -3,7 +3,7 @@
 **Çalışma adı:** Futbol Bilgi Oyunu (web + sonraki aşamada mobil)
 **Doküman dili:** Türkçe
 **Hedef okuyucu:** Codex, Claude Code ve insan geliştiriciler
-**Durum:** Faz 0 tamamlandı — Faz 1 kodlaması için kurallar ve veri kullanım kapısı kesinleştirildi. Ayrıntılı karar kaydı: [`docs/phase-0.md`](docs/phase-0.md).
+**Durum:** Faz 1 tamamlandı — temel Django/Vue altyapısı, PostgreSQL kalıcılığı, REST/WebSocket sözleşmesi ve misafir canlı oturum akışı hazır. Karar kaydı: [`docs/phase-0.md`](docs/phase-0.md); teslim notları: [`docs/phase-1.md`](docs/phase-1.md).
 
 ---
 
@@ -366,7 +366,7 @@ Kurallar:
 | Faz | İşler | Tamamlanma ölçütü |
 |---|---|---|
 | **0 — Kurallar ve veri doğrulaması** | Beş modun cevap, süre, hata ve puan kurallarını kesinleştirmek; örnek içerik ve veri kullanım haklarını incelemek. | Her mod için doğrulanmış örnek soru ve uygulanabilir oyun kuralları vardır. |
-| **1 — Temel altyapı** | Django backend, **PostgreSQL şeması ve migration'ları**, REST API, WebSocket altyapısı, Vue uygulaması, hesap ve misafir oturumları. | Web istemcisi API'ye bağlanır; kalıcı kayıtlar PostgreSQL'de tutulur; iki istemci canlı oturuma bağlanır. |
+| **1 — Temel altyapı** | Django backend, **PostgreSQL şeması ve migration'ları**, REST API, WebSocket altyapısı, Vue uygulaması, hesap ve misafir oturumları. | Web istemcisi API'ye bağlanır; kalıcı kayıtlar PostgreSQL'de tutulur; iki istemci canlı oturuma bağlanır. **Tamamlandı.** |
 | **2 — İçerik yönetimi** | Futbolcu, takım, kariyer, maç, skor ve ilk 11 verilerini PostgreSQL'de modellemek; API içe aktarma, editör onayı, çeviri ve yayın akışı. | Beş mod için onaylı sorular üretilebilir; doğrulanmamış veri oyuncuya gösterilmez. |
 | **3 — Oyun motoru ve pratik** | Sunucu tarafında soru seçimi, süre, cevap doğrulaması ve puanlama; Vue tarafında beş modun modern, futbol temalı ekranları. | Beş mod iki dilde tek başına baştan sona oynanır. |
 | **4 — Derecesiz çok oyunculu oyun** | Asenkron düello, davet, özel oda ve canlı derecesiz maçlar; bağlantı kopması ve süresi dolan oyunların ele alınması. | Düello farklı zamanlarda tamamlanır; 2–8 kişi özel odada oynar. |

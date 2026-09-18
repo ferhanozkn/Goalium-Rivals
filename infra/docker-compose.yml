@@ -1,0 +1,71 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    env_file:
+      - ../.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ../backend
+    env_file:
+      - ../.env
+    volumes:
+      - ../backend:/app
+    command: sh -c "python manage.py migrate && daphne -b 0.0.0.0 -p 8000 config.asgi:application"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build:
+      context: ../backend
+    env_file:
+      - ../.env
+    volumes:
+      - ../backend:/app
+    command: celery -A config.celery.app worker --loglevel=info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ../frontend
+    volumes:
+      - ../frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+    name: goalium_rivals_postgres_data
+  redis_data:
+    name: goalium_rivals_redis_data
+  frontend_node_modules:
+    name: goalium_rivals_frontend_node_modules

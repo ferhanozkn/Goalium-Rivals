@@ -33,4 +33,5 @@ Bu dosya, projede çalışan kod ajanları için operasyonel başlangıç notudu
 ## Mevcut durum
 
 - Faz 0: tamamlandı.
-- Faz 1: henüz başlatılmayacak; kullanıcı açıkça istemeden Faz 1 koduna geçilmez.
+- Faz 1: tamamlandı. Teslim kapsamı ve yerel doğrulama sonuçları [`docs/phase-1.md`](docs/phase-1.md) içindedir.
+- Sonraki faz: kullanıcı açıkça istemeden Faz 2 kapsamına geçilmez.
