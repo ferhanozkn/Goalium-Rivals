@@ -7,22 +7,25 @@ from apps.content.models import Question, QuestionPayload, QuestionTranslation, 
 
 QUESTIONS = [
     {
-        "seed_key": "phase3:hangman:offside",
+        "seed_key": "phase3:hangman:iniesta",
         "mode": "hangman",
-        "difficulty": "easy",
-        "source": ("IFAB", "https://www.theifab.com/laws/latest/offside/"),
-        "public_payload": {"category": "rule", "word_length": 6},
-        "answer_data": {"canonical": "ofsayt", "accepted_answers": {"tr": ["ofsayt"], "en": ["offside"]}},
+        "difficulty": "medium",
+        "source": ("Wikidata", "https://www.wikidata.org/wiki/Q160530"),
+        "public_payload": {"category": "footballer", "word_length": 13},
+        "answer_data": {
+            "canonical": "Andrés Iniesta",
+            "accepted_answers": {"tr": ["Andrés Iniesta", "Andres Iniesta", "Iniesta"], "en": ["Andrés Iniesta", "Andres Iniesta", "Iniesta"]},
+        },
         "translations": {
             "tr": {
-                "prompt": "Rakibin kale çizgisine toptan ve sondan ikinci rakipten daha yakın olma durumuyla ilgili kelimeyi bulun.",
-                "hints": ["Futbol kuralı"],
-                "public_data": {"category": "Kural"},
+                "prompt": "Bu futbolcunun adını harfleri açarak bulun.",
+                "hints": ["Futbolcu", "İspanya millî takımının eski oyuncusu"],
+                "public_data": {"category": "Futbolcu"},
             },
             "en": {
-                "prompt": "Find the football term for being nearer to the opponents' goal line than both the ball and the second-last opponent.",
-                "hints": ["Football rule"],
-                "public_data": {"category": "Rule"},
+                "prompt": "Reveal the name of this footballer letter by letter.",
+                "hints": ["Footballer", "Former Spain international"],
+                "public_data": {"category": "Footballer"},
             },
         },
     },
@@ -141,6 +144,10 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
+        Question.objects.filter(seed_key="phase3:hangman:offside").exclude(status="retired").update(
+            status="retired",
+            published_at=timezone.now(),
+        )
         for definition in QUESTIONS:
             sources = []
             for provider, url in [definition["source"], *definition.get("additional_sources", [])]:
